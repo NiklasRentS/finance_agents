@@ -85,6 +85,30 @@ Gespeichert werden der Report im Original, alle Kennzahlen je Periode samt
 Quellen sowie die verwendeten Bewertungsannahmen. Damit sind später Historie,
 Vergleiche zwischen Läufen und Benachrichtigungen bei Änderungen möglich.
 
+### Qualitative Einordnung mit lokalem Sprachmodell
+
+Das Sprachmodell läuft lokal in Docker und kostet nichts. Einmalig starten und
+das Modell laden:
+
+```powershell
+docker compose up -d ollama
+docker exec finance_agents_llm ollama pull qwen2.5:7b-instruct
+```
+
+Danach:
+
+```powershell
+finance-agents analyze AAPL --research
+```
+
+Das Modell bekommt ausschließlich die bereits belegten Kennzahlen als
+nummerierte Faktenliste und formuliert daraus Beobachtungen. Es liefert keine
+eigenen Zahlen: Jede Aussage muss die Kennungen der genutzten Fakten nennen,
+und jede Zahl im Satz muss aus genau diesen Fakten stammen. Aussagen, die diese
+Prüfung nicht bestehen, werden verworfen und im Report als verworfen ausgewiesen.
+Ist das Modell nicht erreichbar, entsteht lediglich ein Hinweis, der Report wird
+trotzdem erzeugt.
+
 ### SEC-Zugriff konfigurieren
 
 Die SEC verlangt einen identifizierenden User-Agent. Trage in der `.env` eine
@@ -123,7 +147,8 @@ Projekt im Aufbau.
 - [x] Bewertung: DCF mit Sensitivitätsmatrix, Multiples
 - [x] Analyse-Orchestrierung, Markdown-Report, CLI
 - [x] Persistenz: gespeicherte Läufe mit Kennzahlen, Quellen und Report
-- [ ] Agenten, API
+- [x] Research-Agent mit lokalem Sprachmodell (Ollama) und Belegpflicht
+- [ ] Weitere Agenten (Filings, Risiko, Szenarien), API
 
 Integrationstests gegen die echte SEC-API laufen separat:
 

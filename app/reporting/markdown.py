@@ -6,10 +6,15 @@ and everything that is missing is named explicitly instead of being omitted.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from app.domain.facts import Confidence, Fact, FactKind, SourceRef
 from app.domain.financials import Metric, NumericFact
 from app.services.analysis import HEADLINE_METRICS, RATIO_METRICS, CompanyAnalysis
 from app.services.valuation import Multiples, SensitivityGrid
+
+if TYPE_CHECKING:  # pragma: no cover - import cycle guard
+    from app.agents.research import ResearchNotes
 
 DISCLAIMER = (
     "Dieser Bericht ist eine strukturierte Aufbereitung oeffentlich verfuegbarer Daten "
@@ -56,6 +61,13 @@ NOT_AVAILABLE = "DATA NOT AVAILABLE"
 PER_SHARE_METRICS = frozenset({Metric.EPS_BASIC, Metric.EPS_DILUTED})
 SHARE_COUNT_METRICS = frozenset({Metric.SHARES_OUTSTANDING, Metric.SHARES_DILUTED})
 
+CATEGORY_LABELS = {
+    "OBSERVATION": "Beobachtung",
+    "TREND": "Entwicklung",
+    "RISK": "Risiko",
+    "DATA_GAP": "Datenluecke",
+}
+
 
 class SourceIndex:
     """Numbered bibliography built from the facts that were actually used."""
@@ -80,7 +92,7 @@ class SourceIndex:
         return list(enumerate(self._order, start=1))
 
 
-def render_markdown(analysis: CompanyAnalysis) -> str:
+def render_markdown(analysis: CompanyAnalysis, research: ResearchNotes | None = None) -> str:
     """Render a complete report. Never raises on missing data."""
     sources = SourceIndex()
     body = "\n".join(
@@ -94,6 +106,7 @@ def render_markdown(analysis: CompanyAnalysis) -> str:
             *_market(analysis, sources),
             *_valuation(analysis, sources),
             *_sensitivity(analysis.sensitivity, analysis.history.currency),
+            *_research(research, sources),
             *_data_gaps(analysis),
             *_bibliography(sources),
         ]
@@ -313,6 +326,36 @@ def _sensitivity(grid: SensitivityGrid, currency: str | None) -> list[str]:
         lines.extend(
             [f"Spannweite ueber alle Kombinationen: {spread[0]:,.2f} bis {spread[1]:,.2f}.", ""]
         )
+    return lines
+
+
+def _research(research: ResearchNotes | None, sources: SourceIndex) -> list[str]:
+    if research is None:
+        return []
+    lines = [
+        "## Qualitative Einordnung",
+        "",
+        f"Die folgenden Saetze hat ein Sprachmodell ({research.model}) allein aus den oben "
+        "belegten Fakten formuliert. Sie enthalten keine zusaetzlichen Daten. Aussagen ohne "
+        "Deckung in diesen Fakten wurden automatisch verworfen.",
+        "",
+    ]
+    for warning in research.warnings:
+        lines.extend([f"- {warning}", ""])
+    if research.notes:
+        for note in research.notes:
+            markers = "".join(
+                f"[{number}]" for number in sorted({sources.add(s) for s in note.sources})
+            )
+            label = CATEGORY_LABELS.get(note.category.value, note.category.value)
+            lines.append(f"- **{label}:** {note.statement} {markers}".rstrip())
+        lines.append("")
+    elif not research.warnings:
+        lines.extend(["Keine belegbaren Aussagen erzeugt.", ""])
+    if research.open_questions:
+        lines.extend(["Offene Fragen:", ""])
+        lines.extend(f"- {question}" for question in research.open_questions)
+        lines.append("")
     return lines
 
 

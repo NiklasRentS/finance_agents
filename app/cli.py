@@ -9,9 +9,11 @@ from typing import Annotated
 import typer
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.agents.research import ResearchNotes, run_research
 from app.config.settings import get_settings
 from app.infra.logging import configure_logging
 from app.ports.exceptions import ProviderError
+from app.providers.ollama import OllamaClient
 from app.providers.sec_edgar import SecEdgarFundamentalsProvider
 from app.providers.yahoo import YahooFinanceMarketDataProvider
 from app.reporting.markdown import render_markdown
@@ -40,6 +42,9 @@ def analyze(
     projection_years: Annotated[int, typer.Option(help="Prognosejahre im DCF")] = 5,
     output: Annotated[Path | None, typer.Option(help="Zieldatei fuer den Report")] = None,
     save: Annotated[bool, typer.Option(help="Lauf in der Datenbank speichern")] = False,
+    research: Annotated[
+        bool, typer.Option(help="Qualitative Einordnung durch das lokale Sprachmodell")
+    ] = False,
     skip_market_data: Annotated[bool, typer.Option(help="Nur Fundamentaldaten")] = False,
     verbose: Annotated[bool, typer.Option(help="Debug-Logging")] = False,
 ) -> None:
@@ -77,7 +82,17 @@ def analyze(
         if market_data is not None:
             market_data.close()
 
-    report = render_markdown(analysis)
+    notes: ResearchNotes | None = None
+    if research:
+        llm = OllamaClient.build(settings)
+        try:
+            notes = run_research(analysis, llm)
+        finally:
+            llm.close()
+        for warning in notes.warnings:
+            typer.secho(warning, fg=typer.colors.YELLOW, err=True)
+
+    report = render_markdown(analysis, notes)
     if output is None:
         typer.echo(report)
     else:
