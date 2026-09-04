@@ -39,14 +39,6 @@ class FakeMarketDataProvider(MarketDataProvider):
     ) -> list[PricePoint]:
         return [PricePoint(date=start, close=self._price)]
 
-    def get_market_cap(self, ticker: str) -> Fact[float]:
-        return Fact[float](
-            value=self._price * 1_000_000,
-            unit="USD",
-            kind=FactKind.DERIVED,
-            sources=[FAKE_SOURCE],
-        )
-
 
 class FakeFundamentalsProvider(FundamentalsProvider):
     name = "fake_fundamentals"

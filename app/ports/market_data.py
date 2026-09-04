@@ -31,7 +31,11 @@ class PricePoint(BaseModel):
 
 
 class MarketDataProvider(ABC):
-    """Prices only. Fundamentals belong to :class:`FundamentalsProvider`."""
+    """Prices only.
+
+    Market capitalisation is deliberately absent: it is derived from a price and
+    a share count, each of which carries its own source.
+    """
 
     name: str
 
@@ -44,7 +48,3 @@ class MarketDataProvider(ABC):
         self, ticker: str, *, start: date, end: date | None = None
     ) -> list[PricePoint]:
         """Return daily closing prices in chronological order."""
-
-    @abstractmethod
-    def get_market_cap(self, ticker: str) -> Fact[float]:
-        """Return market capitalisation, or an N/A fact when unknown."""
