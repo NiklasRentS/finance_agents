@@ -45,6 +45,25 @@ docker compose up -d
 pytest
 ```
 
+### Analyse ausführen
+
+```powershell
+# Report auf der Konsole
+finance-agents analyze AAPL
+
+# Report als Datei, mit eigenen Bewertungsannahmen
+finance-agents analyze MSFT --wacc 0.085 --terminal-growth 0.025 --output reports/MSFT.md
+
+# Ohne Marktdaten (nur Fundamentaldaten der SEC)
+finance-agents analyze AAPL --skip-market-data
+```
+
+Ohne Installation als Skript geht auch `python -m app.cli analyze AAPL`.
+Jeder Wert im Report trägt eine Quellenangabe; geschätzte Werte sind mit
+`[ASSUMPTION]`, unsichere mit `[LOW CONFIDENCE]` und fehlende mit
+`DATA NOT AVAILABLE` gekennzeichnet. Der Report ist eine Datenaufbereitung und
+ausdrücklich keine Kauf- oder Verkaufsempfehlung.
+
 ### SEC-Zugriff konfigurieren
 
 Die SEC verlangt einen identifizierenden User-Agent. Trage in der `.env` eine
@@ -80,7 +99,8 @@ Projekt im Aufbau.
 - [x] SEC-EDGAR-Adapter: Fundamentaldaten aus XBRL
 - [x] Marktdaten-Adapter (Yahoo Finance) und Kennzahlen-Service
 - [x] Bewertung: DCF mit Sensitivitätsmatrix, Multiples
-- [ ] Persistenz, Report, CLI, Agenten
+- [x] Analyse-Orchestrierung, Markdown-Report, CLI
+- [ ] Persistenz, Agenten, API
 
 Integrationstests gegen die echte SEC-API laufen separat:
 
