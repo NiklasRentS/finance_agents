@@ -72,4 +72,17 @@ tests/
 
 ## Status
 
-Projekt im Aufbau. Aktueller Stand: Fundament (Konfiguration, Domänenmodelle).
+Projekt im Aufbau.
+
+- [x] Fundament: Konfiguration, Domänenmodelle mit Provenance
+- [x] Infrastruktur: HTTP-Client, Cache, Rate-Limiter, Budgetkontrolle
+- [x] Ports: austauschbare Provider-Interfaces
+- [x] SEC-EDGAR-Adapter: Fundamentaldaten aus XBRL
+- [ ] Marktdaten-Adapter, Kennzahlen-Service, Bewertung, Report
+
+Integrationstests gegen die echte SEC-API laufen separat:
+
+```powershell
+pytest -m integration
+```
+
