@@ -79,7 +79,8 @@ Projekt im Aufbau.
 - [x] Ports: austauschbare Provider-Interfaces
 - [x] SEC-EDGAR-Adapter: Fundamentaldaten aus XBRL
 - [x] Marktdaten-Adapter (Yahoo Finance) und Kennzahlen-Service
-- [ ] Bewertung (DCF, Multiples), Persistenz, Report, Agenten
+- [x] Bewertung: DCF mit Sensitivitätsmatrix, Multiples
+- [ ] Persistenz, Report, CLI, Agenten
 
 Integrationstests gegen die echte SEC-API laufen separat:
 
