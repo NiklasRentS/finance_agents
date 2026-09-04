@@ -64,6 +64,27 @@ Jeder Wert im Report trägt eine Quellenangabe; geschätzte Werte sind mit
 `DATA NOT AVAILABLE` gekennzeichnet. Der Report ist eine Datenaufbereitung und
 ausdrücklich keine Kauf- oder Verkaufsempfehlung.
 
+### Läufe speichern
+
+Einmalig das Schema anlegen (Postgres muss laufen):
+
+```powershell
+docker compose up -d postgres
+alembic upgrade head
+```
+
+Danach lassen sich Läufe speichern und später wieder abrufen:
+
+```powershell
+finance-agents analyze AAPL --save
+finance-agents runs --ticker AAPL
+finance-agents report <lauf-kennung>
+```
+
+Gespeichert werden der Report im Original, alle Kennzahlen je Periode samt
+Quellen sowie die verwendeten Bewertungsannahmen. Damit sind später Historie,
+Vergleiche zwischen Läufen und Benachrichtigungen bei Änderungen möglich.
+
 ### SEC-Zugriff konfigurieren
 
 Die SEC verlangt einen identifizierenden User-Agent. Trage in der `.env` eine
@@ -86,6 +107,7 @@ app/
   repositories/    Persistenz (SQLAlchemy)
   infra/           HTTP, Cache, Rate-Limiting, Logging
   api/             FastAPI-Routen
+migrations/        Alembic-Migrationen
 tests/
 ```
 
@@ -100,7 +122,8 @@ Projekt im Aufbau.
 - [x] Marktdaten-Adapter (Yahoo Finance) und Kennzahlen-Service
 - [x] Bewertung: DCF mit Sensitivitätsmatrix, Multiples
 - [x] Analyse-Orchestrierung, Markdown-Report, CLI
-- [ ] Persistenz, Agenten, API
+- [x] Persistenz: gespeicherte Läufe mit Kennzahlen, Quellen und Report
+- [ ] Agenten, API
 
 Integrationstests gegen die echte SEC-API laufen separat:
 

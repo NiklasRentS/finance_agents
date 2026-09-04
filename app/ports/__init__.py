@@ -10,9 +10,11 @@ from app.ports.llm import LlmClient, LlmMessage, LlmResponse, Role
 from app.ports.macro import MacroProvider
 from app.ports.market_data import MarketDataProvider, PricePoint, Quote
 from app.ports.news import NewsItem, NewsProvider
+from app.ports.storage import AnalysisStore, RunSummary
 from app.ports.web_search import SearchResult, WebSearchProvider
 
 __all__ = [
+    "AnalysisStore",
     "CompanyNotFoundError",
     "DataNotAvailableError",
     "Filing",
@@ -31,6 +33,7 @@ __all__ = [
     "ProviderUnavailableError",
     "Quote",
     "Role",
+    "RunSummary",
     "SearchResult",
     "WebSearchProvider",
 ]
