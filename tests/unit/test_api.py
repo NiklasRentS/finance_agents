@@ -152,6 +152,7 @@ def test_stock_endpoints_expose_structured_research_without_parsing_markdown(
     financials = client.get("/api/v1/stocks/AAPL/financials")
     valuation = client.get("/api/v1/stocks/AAPL/valuation")
     report = client.get("/api/v1/stocks/AAPL/reports")
+    decision = client.get("/api/v1/stocks/AAPL/decision")
 
     assert stock.status_code == 200
     assert stock.json()["run_id"] == str(run_id)
@@ -160,6 +161,9 @@ def test_stock_endpoints_expose_structured_research_without_parsing_markdown(
     assert financials.json()[-1]["values"]["revenue"]["value"] is not None
     assert valuation.json()["valuation"]["value_per_share"]
     assert report.json() == {"run_id": str(run_id), "markdown": "# Human report"}
+    assert decision.status_code == 200
+    assert decision.json()["analysis_run_id"] == str(run_id)
+    assert decision.json()["decision"]
 
 
 def test_persistent_analysis_job_endpoints_list_and_cancel(store: SqlAnalysisStore) -> None:

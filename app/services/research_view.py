@@ -40,6 +40,7 @@ class ResearchViewService:
             "scenarios": run.scenarios or [],
             "thesis": run.thesis,
             "catalysts": run.catalysts or [],
+            "decision_brief": run.decision_brief,
             "financials": [
                 {
                     "period": snapshot.period.model_dump(mode="json"),

@@ -26,6 +26,7 @@ class StockResponse(BaseModel):
     scenarios: list[dict[str, Any]]
     thesis: str | None
     catalysts: list[dict[str, Any]]
+    decision_brief: dict[str, Any] | None
     financials: list[dict[str, Any]]
     sources: list[str]
     report_available: bool
@@ -69,5 +70,15 @@ def build_research_router(store: SqlAnalysisStore) -> APIRouter:
             raise HTTPException(status_code=404, detail="no saved analysis for ticker")
         report = service.report(result["run_id"])
         return report or {"run_id": result["run_id"], "markdown": None}
+
+    @router.get("/{ticker}/decision")
+    def decision(ticker: str) -> dict[str, Any]:
+        result = service.latest_stock(ticker)
+        if result is None:
+            raise HTTPException(status_code=404, detail="no saved analysis for ticker")
+        brief = result.get("decision_brief")
+        if brief is None:
+            raise HTTPException(status_code=404, detail="no decision brief for ticker")
+        return cast(dict[str, Any], brief)
 
     return router

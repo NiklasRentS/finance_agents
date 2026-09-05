@@ -240,6 +240,13 @@ Ollama-Erklärungsschicht über dem deterministischen Decision Brief. Das LLM
 interpretiert ausschließlich vorhandene Evidence, übernimmt Decision und
 Confidence unverändert und kann keine Finanzwerte oder Trading-Aktionen erzeugen.
 
+### Investment Decision Copilot - Phase 12
+
+Neue Analysis Runs persistieren den deterministischen Decision Brief direkt am
+bestehenden Run als strukturiertes JSON. Die API liefert ihn ohne Markdown-
+Parsing über `GET /api/v1/stocks/{ticker}/decision` aus. Es gibt weiterhin keine
+Frontend-, Scheduler- oder Broker-Integration in dieser Phase.
+
 ### Manueller End-to-End-Test
 
 Für einen vollständigen lokalen Test öffne zwei PowerShell-Fenster. Das erste

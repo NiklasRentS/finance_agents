@@ -18,6 +18,7 @@ from app.agents.risk import build_risk_signals
 from app.agents.scenarios import build_scenario_outcomes, build_thesis_statement
 from app.config.settings import Settings
 from app.domain.company import Company
+from app.domain.decision import InvestmentDecisionBrief
 from app.domain.facts import Confidence, FactKind, Period, SourceRef
 from app.domain.financials import FinancialHistory, FinancialSnapshot, Metric, NumericFact
 from app.domain.jobs import JobStatus, validate_transition
@@ -32,12 +33,14 @@ from app.repositories.models import (
     WatchlistRow,
 )
 from app.services.analysis import CompanyAnalysis
+from app.services.decision_engine import build_decision_input, evaluate_decision
 from app.services.valuation import DcfAssumptions, DcfResult, Multiples
 
 _ASSUMPTIONS = TypeAdapter(DcfAssumptions)
 _VALUATION = TypeAdapter(DcfResult)
 _MULTIPLES = TypeAdapter(Multiples)
 _QUOTE = TypeAdapter(Quote)
+_DECISION = TypeAdapter(InvestmentDecisionBrief)
 
 
 @dataclass(frozen=True)
@@ -56,6 +59,7 @@ class StoredRun:
     scenarios: list[dict[str, Any]] | None
     thesis: str | None
     catalysts: list[dict[str, Any]] | None
+    decision_brief: dict[str, Any] | None
     report_markdown: str | None
 
 
@@ -173,6 +177,12 @@ class SqlAnalysisStore(AnalysisStore):
                     scenarios=[scenario.__dict__ for scenario in build_scenario_outcomes(analysis)],
                     thesis=build_thesis_statement(analysis),
                     catalysts=[point.__dict__ for point in build_catalyst_points(analysis)],
+                    decision_brief=_dump(
+                        _DECISION,
+                        evaluate_decision(
+                            build_decision_input(analysis, analysis_run_id=str(run_id))
+                        ),
+                    ),
                     report_markdown=report_markdown,
                     facts=_fact_rows(run_id, analysis.history),
                 )
@@ -351,6 +361,7 @@ def _stored_run(row: AnalysisRunRow, company_name: str) -> StoredRun:
         scenarios=row.scenarios,
         thesis=row.thesis,
         catalysts=row.catalysts,
+        decision_brief=row.decision_brief,
         report_markdown=row.report_markdown,
     )
 
