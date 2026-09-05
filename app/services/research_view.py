@@ -39,6 +39,7 @@ class ResearchViewService:
             "competitive": run.competitive,
             "scenarios": run.scenarios or [],
             "thesis": run.thesis,
+            "catalysts": run.catalysts or [],
             "financials": [
                 {
                     "period": snapshot.period.model_dump(mode="json"),

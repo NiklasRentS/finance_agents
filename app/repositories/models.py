@@ -80,6 +80,7 @@ class AnalysisRunRow(Base):
     competitive: Mapped[dict[str, Any] | None] = mapped_column(JSON_TYPE)
     scenarios: Mapped[list[dict[str, Any]] | None] = mapped_column(JSON_TYPE)
     thesis: Mapped[str | None] = mapped_column(Text)
+    catalysts: Mapped[list[dict[str, Any]] | None] = mapped_column(JSON_TYPE)
     report_markdown: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 

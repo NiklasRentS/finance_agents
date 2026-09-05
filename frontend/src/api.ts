@@ -56,6 +56,7 @@ export type ResearchStock = {
   competitive?: { score: number; summary: string } | null
   scenarios: Array<{ name: string; probability: number; narrative: string }>
   thesis?: string | null
+  catalysts: Array<{ name: string; summary: string }>
   financials: Array<{ period: { label?: string }; values: Record<string, ResearchFact> }>
   sources: string[]
   report_available: boolean
@@ -87,4 +88,5 @@ export const api = {
     if (!response.ok) throw new Error(`${response.status} ${response.statusText}`)
     return response.json() as Promise<AnalysisJob>
   },
+  analysisStatus: (jobId: string) => request<AnalysisJob>(`/api/v1/analysis/${encodeURIComponent(jobId)}`),
 }

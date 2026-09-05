@@ -191,6 +191,12 @@ Analyse läuft im Backend und speichert nach erfolgreichem Abschluss einen
 normalen Research-Run. Bei einem Fehler wird der Jobstatus auf `failed` gesetzt;
 es werden keine Research-Berechnungen im Browser ausgeführt.
 
+Das Frontend fragt den Jobstatus bis zum Abschluss oder Fehler ab und lädt den
+Dashboard-Stand danach neu. Für gespeicherte Runs werden außerdem strukturierte
+Catalyst-Observations persistiert und auf der Stock-Detailseite separat von
+Risiken, Szenarien und dem menschenlesbaren Report angezeigt. Diese Hinweise
+sind faktengebundene Research-Beobachtungen und keine Handlungsaufforderungen.
+
 ### Manueller End-to-End-Test
 
 Für einen vollständigen lokalen Test öffne zwei PowerShell-Fenster. Das erste
@@ -318,7 +324,8 @@ Projekt im Aufbau.
 - [x] Frontend-Stock-Detailseite mit strukturierten Financials, Valuation und Quellen
 - [x] Strukturierte Persistenz und Frontend-Darstellung für Risiken und Szenarien
 - [x] Analyse-Job-Endpunkt und Frontend-Startstatus
-- [ ] Frontend-Catalyst-Darstellung und produktiver Scheduler
+- [x] Frontend-Catalyst-Darstellung und Job-Status-Polling
+- [ ] Produktiver Scheduler und langlebige Job-Persistenz
 - [ ] Authentifizierung und Benutzerverwaltung für einen produktiven API-Betrieb
 
 Integrationstests gegen die echte SEC-API laufen separat:

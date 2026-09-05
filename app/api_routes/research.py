@@ -25,6 +25,7 @@ class StockResponse(BaseModel):
     competitive: dict[str, Any] | None
     scenarios: list[dict[str, Any]]
     thesis: str | None
+    catalysts: list[dict[str, Any]]
     financials: list[dict[str, Any]]
     sources: list[str]
     report_available: bool

@@ -12,6 +12,7 @@ from pydantic import TypeAdapter
 from sqlalchemy import Engine, create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.agents.catalysts import build_catalyst_points
 from app.agents.competitive import build_competitive_summary
 from app.agents.risk import build_risk_signals
 from app.agents.scenarios import build_scenario_outcomes, build_thesis_statement
@@ -46,6 +47,7 @@ class StoredRun:
     competitive: dict[str, Any] | None
     scenarios: list[dict[str, Any]] | None
     thesis: str | None
+    catalysts: list[dict[str, Any]] | None
     report_markdown: str | None
 
 
@@ -90,6 +92,7 @@ class SqlAnalysisStore(AnalysisStore):
                     competitive=build_competitive_summary(analysis).__dict__,
                     scenarios=[scenario.__dict__ for scenario in build_scenario_outcomes(analysis)],
                     thesis=build_thesis_statement(analysis),
+                    catalysts=[point.__dict__ for point in build_catalyst_points(analysis)],
                     report_markdown=report_markdown,
                     facts=_fact_rows(run_id, analysis.history),
                 )
@@ -267,6 +270,7 @@ def _stored_run(row: AnalysisRunRow, company_name: str) -> StoredRun:
         competitive=row.competitive,
         scenarios=row.scenarios,
         thesis=row.thesis,
+        catalysts=row.catalysts,
         report_markdown=row.report_markdown,
     )
 
