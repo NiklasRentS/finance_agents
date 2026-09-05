@@ -275,6 +275,13 @@ GET /api/v1/stocks/{ticker}/changes
 GET /api/v1/watchlist/attention?limit=3
 ```
 
+### Abschlussphase - API-Härtung
+
+Die strukturierten History- und Attention-Endpunkte verwenden explizite
+Pydantic-Response-Verträge und validieren Grenzfälle wie unbekannte Ticker und
+ungültige Limits. Die vollständige nicht-integrierte Test- und Qualitätsprüfung
+bleibt der Abschlusscheck für die Backend-Schichten.
+
 ### Manueller End-to-End-Test
 
 Für einen vollständigen lokalen Test öffne zwei PowerShell-Fenster. Das erste

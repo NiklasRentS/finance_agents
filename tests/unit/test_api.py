@@ -193,3 +193,15 @@ def test_decision_history_and_attention_endpoints(store: SqlAnalysisStore) -> No
     assert history.json()["previous_run_id"] is None
     assert attention.status_code == 200
     assert attention.json()["items"] == []
+
+
+def test_decision_history_unknown_ticker_and_attention_limit_are_rejected(
+    store: SqlAnalysisStore,
+) -> None:
+    client = TestClient(create_app(store=store))
+
+    unknown = client.get("/api/v1/stocks/UNKNOWN/changes")
+    invalid_limit = client.get("/api/v1/watchlist/attention?limit=0")
+
+    assert unknown.status_code == 404
+    assert invalid_limit.status_code == 422
