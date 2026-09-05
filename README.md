@@ -303,7 +303,8 @@ Projekt im Aufbau.
 - [ ] Mapping eines anonymisierten echten Trade-Republic-Exports
 - [x] Read-only-Portfolio-API
 - [x] Persönliches React/TypeScript/Vite-Frontend mit Dashboard, Portfolio, Watchlist und Historie
-- [ ] Frontend-Stock-Detailseite mit Financials, Valuation, Szenarien und Quellen
+- [x] Frontend-Stock-Detailseite mit strukturierten Financials, Valuation und Quellen
+- [ ] Frontend-Szenarien-, Risiko- und Catalyst-Darstellung
 - [ ] Authentifizierung und Benutzerverwaltung für einen produktiven API-Betrieb
 
 Integrationstests gegen die echte SEC-API laufen separat:

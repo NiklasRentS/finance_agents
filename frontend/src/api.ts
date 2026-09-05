@@ -40,6 +40,22 @@ export type Alert = {
   delta?: number | null
 }
 
+export type ResearchFact = { value?: string | number | null; unit?: string | null }
+export type ResearchStock = {
+  run_id: string
+  ticker: string
+  company_name: string
+  generated_at: string
+  currency?: string | null
+  assumptions: Record<string, unknown>
+  valuation: Record<string, unknown>
+  market?: Record<string, unknown> | null
+  warnings: string[]
+  financials: Array<{ period: { label?: string }; values: Record<string, ResearchFact> }>
+  sources: string[]
+  report_available: boolean
+}
+
 export type Portfolio = {
   positions: Position[]
   cash: CashBalance[]
@@ -60,4 +76,5 @@ export const api = {
   watchlist: () => request<WatchlistItem[]>('/api/v1/watchlist'),
   portfolio: () => request<Portfolio>('/api/v1/portfolio'),
   alerts: (ticker: string) => request<{ alerts: Alert[] }>(`/api/v1/alerts?ticker=${encodeURIComponent(ticker)}&threshold=0.1`),
+  stock: (ticker: string) => request<ResearchStock>(`/api/v1/stocks/${encodeURIComponent(ticker)}`),
 }
