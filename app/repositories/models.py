@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, date, datetime
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import (
@@ -120,3 +121,101 @@ class WatchlistRow(Base):
     company_name: Mapped[str] = mapped_column(String(255))
     notes: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class BrokerAccountRow(Base):
+    __tablename__ = "broker_accounts"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    broker: Mapped[str] = mapped_column(String(32), nullable=False)
+    account_identifier: Mapped[str] = mapped_column(String(128), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+    __table_args__ = (UniqueConstraint("broker", "account_identifier"),)
+
+
+class BrokerInstrumentRow(Base):
+    __tablename__ = "broker_instruments"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    isin: Mapped[str] = mapped_column(String(12), nullable=False, unique=True)
+    ticker: Mapped[str | None] = mapped_column(String(16))
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False)
+
+
+class BrokerPositionRow(Base):
+    __tablename__ = "broker_positions"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    account_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("broker_accounts.id", ondelete="CASCADE"), index=True
+    )
+    instrument_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("broker_instruments.id", ondelete="CASCADE"), index=True
+    )
+    quantity: Mapped[Decimal] = mapped_column(NUMBER_TYPE, nullable=False)
+    average_cost: Mapped[Decimal] = mapped_column(NUMBER_TYPE, nullable=False)
+    current_value: Mapped[Decimal] = mapped_column(NUMBER_TYPE, nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False)
+    imported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (UniqueConstraint("account_id", "instrument_id"),)
+
+
+class BrokerCashBalanceRow(Base):
+    __tablename__ = "broker_cash_balances"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    account_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("broker_accounts.id", ondelete="CASCADE"), index=True
+    )
+    amount: Mapped[Decimal] = mapped_column(NUMBER_TYPE, nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False)
+    imported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (UniqueConstraint("account_id", "currency"),)
+
+
+class BrokerImportRow(Base):
+    __tablename__ = "broker_imports"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    account_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("broker_accounts.id", ondelete="CASCADE"), index=True
+    )
+    broker: Mapped[str] = mapped_column(String(32), nullable=False)
+    source: Mapped[str] = mapped_column(String(255), nullable=False)
+    imported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    records_read: Mapped[int] = mapped_column(nullable=False)
+    records_new: Mapped[int] = mapped_column(nullable=False)
+    records_duplicate: Mapped[int] = mapped_column(nullable=False)
+    errors: Mapped[list[str]] = mapped_column(JSON_TYPE, nullable=False)
+
+
+class BrokerTransactionRow(Base):
+    __tablename__ = "broker_transactions"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    account_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("broker_accounts.id", ondelete="CASCADE"), index=True
+    )
+    instrument_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("broker_instruments.id", ondelete="SET NULL"), nullable=True
+    )
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    transaction_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    quantity: Mapped[Decimal | None] = mapped_column(NUMBER_TYPE)
+    price: Mapped[Decimal | None] = mapped_column(NUMBER_TYPE)
+    fees: Mapped[Decimal] = mapped_column(NUMBER_TYPE, nullable=False)
+    taxes: Mapped[Decimal] = mapped_column(NUMBER_TYPE, nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False)
+    external_id: Mapped[str | None] = mapped_column(String(255))
+    fingerprint: Mapped[str] = mapped_column(String(128), nullable=False)
+    source: Mapped[str] = mapped_column(String(255), nullable=False)
+    import_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("broker_imports.id", ondelete="CASCADE"), index=True
+    )
+
+    __table_args__ = (UniqueConstraint("account_id", "fingerprint"),)

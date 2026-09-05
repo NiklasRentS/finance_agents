@@ -105,6 +105,41 @@ Wichtige Endpunkte:
 Alerts markieren ausschließlich messbare Änderungen. Sie sind keine Kauf- oder
 Verkaufssignale und führen keine Orders aus.
 
+### Read-only Broker-Import (Phase 1)
+
+Trade Republic wird ausschließlich als Read-only-Datenquelle behandelt. Es gibt
+keine Order-, Kauf-, Verkaufs-, Storno- oder Transfer-Funktion und das Projekt
+speichert keine Trade-Republic-Zugangsdaten oder Session-Tokens.
+
+Da Trade Republic aktuell keine öffentlich dokumentierte Kunden-API für diesen
+Zweck bereitstellt, verwendet Phase 1 bewusst noch keinen privaten API-Aufruf
+und kein Login-Scraping. Stattdessen gibt es einen lokalen, versionierten
+Fixture-Adapter. Er akzeptiert ausschließlich das explizit gekennzeichnete
+Format `finance-agents-trade-republic-export-v1`.
+
+Die generischen Modelle befinden sich in `app/domain/broker.py`, der Read-only-
+Port in `app/ports/broker.py` und der lokale Adapter in
+`app/providers/trade_republic/export.py`. ISIN ist die zentrale
+Instrumentenkennung; Geldwerte und Stückzahlen werden als Decimal verarbeitet.
+
+Der anonymisierte Testimport kann ohne Brokerzugang ausgeführt werden:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests/unit/test_broker_import.py -q
+```
+
+Die Fixture liegt in `tests/fixtures/trade_republic_v1.json` und demonstriert:
+
+- Positionen und Transaktionen in EUR und USD
+- externe Transaktions-IDs
+- Fingerprint-basierte IDs für Transaktionen ohne externe ID
+- wiederholten Import ohne Duplikate
+- ungültige Zeilen und fehlende Pflichtfelder
+
+Ein anonymisierter echter Export kann später gegen dieses Format geprüft und
+mit einem konkreten Mapping ergänzt werden. Persönliche Brokerdaten bleiben
+lokal und werden nicht an das LLM gesendet.
+
 ### Manueller End-to-End-Test
 
 Für einen vollständigen lokalen Test öffne zwei PowerShell-Fenster. Das erste
@@ -225,7 +260,9 @@ Projekt im Aufbau.
 - [x] Research-Agent mit lokalem Sprachmodell (Ollama) und Belegpflicht
 - [x] Risiko-, Wettbewerbs-, Szenarien- und finaler Research-Agent
 - [x] FastAPI für Läufe, Historie, Diffs, Alerts und Watchlist
-- [ ] Read-only-Import eigener Brokerdaten (Portfolio/Watchlist), bewusst separat
+- [x] Read-only-Broker-Domäne, versionierter Fixture-Adapter und idempotente Persistenz
+- [ ] Mapping eines anonymisierten echten Trade-Republic-Exports
+- [ ] Portfolio-API und Frontend
 - [ ] Authentifizierung und Benutzerverwaltung für einen produktiven API-Betrieb
 
 Integrationstests gegen die echte SEC-API laufen separat:

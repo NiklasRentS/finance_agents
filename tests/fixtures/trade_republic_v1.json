@@ -1,0 +1,102 @@
+{
+  "format": "finance-agents-trade-republic-export-v1",
+  "data": {
+    "account": {
+      "broker": "trade_republic",
+      "account_identifier": "fixture-account-001",
+      "currency": "EUR"
+    },
+    "positions": [
+      {
+        "account_identifier": "fixture-account-001",
+        "instrument": {
+          "isin": "US0378331005",
+          "ticker": "AAPL",
+          "name": "Example Apple Holding",
+          "currency": "USD"
+        },
+        "quantity": "10.5",
+        "average_cost": "142.00",
+        "current_value": "1850.25",
+        "currency": "USD",
+        "imported_at": "2026-09-05T08:00:00Z"
+      },
+      {
+        "account_identifier": "fixture-account-001",
+        "instrument": {
+          "isin": "DE0000000001",
+          "ticker": "EXEU",
+          "name": "Example Euro Holding",
+          "currency": "EUR"
+        },
+        "quantity": "4",
+        "average_cost": "80.50",
+        "current_value": "350.00",
+        "currency": "EUR",
+        "imported_at": "2026-09-05T08:00:00Z"
+      }
+    ],
+    "cash_balances": [
+      {
+        "account_identifier": "fixture-account-001",
+        "amount": "1250.00",
+        "currency": "EUR",
+        "imported_at": "2026-09-05T08:00:00Z"
+      },
+      {
+        "account_identifier": "fixture-account-001",
+        "amount": "100.00",
+        "currency": "USD",
+        "imported_at": "2026-09-05T08:00:00Z"
+      }
+    ],
+    "transactions": [
+      {
+        "account_identifier": "fixture-account-001",
+        "timestamp": "2026-08-01T10:00:00Z",
+        "transaction_type": "buy",
+        "instrument": {
+          "isin": "US0378331005",
+          "ticker": "AAPL",
+          "name": "Example Apple Holding",
+          "currency": "USD"
+        },
+        "quantity": "10.5",
+        "price": "142.00",
+        "fees": "1.00",
+        "taxes": "0",
+        "currency": "USD",
+        "external_id": "fixture-tx-001",
+        "source": "anonymized-fixture"
+      },
+      {
+        "account_identifier": "fixture-account-001",
+        "timestamp": "2026-08-15T10:00:00Z",
+        "transaction_type": "dividend",
+        "instrument": {
+          "isin": "US0378331005",
+          "ticker": "AAPL",
+          "name": "Example Apple Holding",
+          "currency": "USD"
+        },
+        "quantity": null,
+        "price": null,
+        "fees": "0",
+        "taxes": "0.25",
+        "currency": "USD",
+        "source": "anonymized-fixture"
+      },
+      {
+        "account_identifier": "fixture-account-001",
+        "timestamp": "2026-08-20T10:00:00Z",
+        "transaction_type": "fee",
+        "quantity": null,
+        "price": null,
+        "fees": "2.50",
+        "taxes": "0",
+        "currency": "EUR",
+        "source": "anonymized-fixture"
+      }
+    ]
+  }
+}
