@@ -50,3 +50,13 @@ class AnalysisStore(ABC):
     @abstractmethod
     def load_report(self, run_id: uuid.UUID) -> str | None:
         """Return the stored Markdown report, or ``None`` if none was saved."""
+
+    @abstractmethod
+    def add_watchlist_item(
+        self, *, ticker: str, company_name: str, notes: str | None = None
+    ) -> dict[str, str | None]:
+        """Add or replace an item in the watchlist."""
+
+    @abstractmethod
+    def list_watchlist(self) -> list[dict[str, str | None]]:
+        """Return the current watchlist in reverse-chronological order."""

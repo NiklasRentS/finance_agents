@@ -110,3 +110,13 @@ class RunFactRow(Base):
         UniqueConstraint("run_id", "metric", "period_end", name="uq_run_facts_metric_period"),
         Index("ix_run_facts_metric_period_end", "metric", "period_end"),
     )
+
+
+class WatchlistRow(Base):
+    __tablename__ = "watchlist"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    ticker: Mapped[str] = mapped_column(String(16), index=True, unique=True)
+    company_name: Mapped[str] = mapped_column(String(255))
+    notes: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

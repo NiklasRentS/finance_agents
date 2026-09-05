@@ -85,6 +85,81 @@ Gespeichert werden der Report im Original, alle Kennzahlen je Periode samt
 Quellen sowie die verwendeten Bewertungsannahmen. Damit sind später Historie,
 Vergleiche zwischen Läufen und Benachrichtigungen bei Änderungen möglich.
 
+### API für Historie, Vergleiche und Watchlist
+
+Die gespeicherten Research-Daten sind zusätzlich über FastAPI erreichbar:
+
+```powershell
+alembic upgrade head
+.\.venv\Scripts\python.exe -m uvicorn app.api:app --reload
+```
+
+Wichtige Endpunkte:
+
+- `GET /api/v1/runs` - gespeicherte Läufe
+- `GET /api/v1/runs/{id}/history` - Fakten inklusive Quellen je Periode
+- `GET /api/v1/runs/{id}/diff?other_run_id={id}` - deterministischer Vergleich
+- `GET /api/v1/alerts?ticker=AAPL&threshold=0.10` - große Änderungen zwischen den letzten zwei Läufen
+- `GET` und `POST /api/v1/watchlist` - lokale Research-Watchlist
+
+Alerts markieren ausschließlich messbare Änderungen. Sie sind keine Kauf- oder
+Verkaufssignale und führen keine Orders aus.
+
+### Manueller End-to-End-Test
+
+Für einen vollständigen lokalen Test öffne zwei PowerShell-Fenster. Das erste
+startet die Infrastruktur und legt das Schema an:
+
+```powershell
+docker compose up -d
+docker compose ps
+alembic upgrade head
+```
+
+In `.env` muss für den SEC-Zugriff ein echter identifizierender User-Agent mit
+Kontaktadresse gesetzt sein. Im zweiten Fenster:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.cli analyze AAPL --skip-market-data --output reports/AAPL.md --save
+.\.venv\Scripts\python.exe -m app.cli runs --ticker AAPL
+```
+
+Die Ausgabe von `runs` enthält die Laufkennung. Mit ihr kann der gespeicherte
+Report geprüft werden:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.cli report <lauf-kennung>
+```
+
+Für den Marktdatenpfad anschließend einen Lauf ohne `--skip-market-data` und
+für den lokalen LLM-Pfad einen Lauf mit `--research` starten. Der LLM-Lauf kann
+auf einer CPU mehrere Minuten dauern:
+
+```powershell
+docker exec finance_agents_llm ollama list
+.\.venv\Scripts\python.exe -m app.cli analyze AAPL --research --save
+```
+
+Die API lässt sich separat prüfen, während `uvicorn` läuft:
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn app.api:app --reload
+
+Invoke-RestMethod http://127.0.0.1:8000/api/v1/health
+Invoke-RestMethod http://127.0.0.1:8000/api/v1/runs
+Invoke-RestMethod -Method Post http://127.0.0.1:8000/api/v1/watchlist `
+  -ContentType 'application/json' `
+  -Body '{"ticker":"AAPL","company_name":"Apple Inc.","notes":"Manueller Test"}'
+Invoke-RestMethod http://127.0.0.1:8000/api/v1/watchlist
+Invoke-RestMethod 'http://127.0.0.1:8000/api/v1/alerts?ticker=AAPL&threshold=0'
+```
+
+Die automatisierte lokale Prüfung bleibt der schnellste erste Check:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -m "not integration" -q
+```
+
 ### Qualitative Einordnung mit lokalem Sprachmodell
 
 Das Sprachmodell läuft lokal in Docker und kostet nichts. Einmalig starten und
@@ -148,7 +223,10 @@ Projekt im Aufbau.
 - [x] Analyse-Orchestrierung, Markdown-Report, CLI
 - [x] Persistenz: gespeicherte Läufe mit Kennzahlen, Quellen und Report
 - [x] Research-Agent mit lokalem Sprachmodell (Ollama) und Belegpflicht
-- [ ] Weitere Agenten (Filings, Risiko, Szenarien), API
+- [x] Risiko-, Wettbewerbs-, Szenarien- und finaler Research-Agent
+- [x] FastAPI für Läufe, Historie, Diffs, Alerts und Watchlist
+- [ ] Read-only-Import eigener Brokerdaten (Portfolio/Watchlist), bewusst separat
+- [ ] Authentifizierung und Benutzerverwaltung für einen produktiven API-Betrieb
 
 Integrationstests gegen die echte SEC-API laufen separat:
 

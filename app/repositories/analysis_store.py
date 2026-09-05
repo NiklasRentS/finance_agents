@@ -17,7 +17,7 @@ from app.domain.facts import Confidence, FactKind, Period, SourceRef
 from app.domain.financials import FinancialHistory, FinancialSnapshot, Metric, NumericFact
 from app.ports.market_data import Quote
 from app.ports.storage import AnalysisStore, RunSummary
-from app.repositories.models import AnalysisRunRow, Base, CompanyRow, RunFactRow
+from app.repositories.models import AnalysisRunRow, Base, CompanyRow, RunFactRow, WatchlistRow
 from app.services.analysis import CompanyAnalysis
 from app.services.valuation import DcfAssumptions, DcfResult, Multiples
 
@@ -105,6 +105,56 @@ class SqlAnalysisStore(AnalysisStore):
         with self._sessions() as session:
             run = session.get(AnalysisRunRow, run_id)
             return run.report_markdown if run is not None else None
+
+    def add_watchlist_item(
+        self, *, ticker: str, company_name: str, notes: str | None = None
+    ) -> dict[str, str | None]:
+        item = ticker.strip().upper()
+        if not item:
+            raise ValueError("ticker is required")
+        with self._sessions.begin() as session:
+            existing = session.scalars(
+                select(WatchlistRow).where(WatchlistRow.ticker == item)
+            ).first()
+            if existing is not None:
+                existing.company_name = company_name
+                existing.notes = notes
+                session.flush()
+                return {
+                    "id": str(existing.id),
+                    "ticker": existing.ticker,
+                    "company_name": existing.company_name,
+                    "notes": existing.notes,
+                }
+
+            row = WatchlistRow(
+                ticker=item,
+                company_name=company_name,
+                notes=notes,
+            )
+            session.add(row)
+            session.flush()
+            return {
+                "id": str(row.id),
+                "ticker": row.ticker,
+                "company_name": row.company_name,
+                "notes": row.notes,
+            }
+
+    def list_watchlist(self) -> list[dict[str, str | None]]:
+        with self._sessions() as session:
+            rows = session.scalars(
+                select(WatchlistRow).order_by(WatchlistRow.created_at.desc())
+            ).all()
+            return [
+                {
+                    "id": str(row.id),
+                    "ticker": row.ticker,
+                    "company_name": row.company_name,
+                    "notes": row.notes,
+                }
+                for row in rows
+            ]
 
     def _company_row(self, session: Session, company: Company, ticker: str) -> CompanyRow:
         """Return the stored company, matched on CIK and otherwise on ticker."""
