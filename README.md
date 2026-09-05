@@ -263,6 +263,18 @@ Monitoring-Punkte und die Evidence-Anzahl. Eine optionale Explain-Aktion ruft
 die validierte lokale LLM-Erklärung ab. Finanzwerte und Kategorien werden nicht
 im Browser berechnet oder verändert.
 
+### Investment Decision Copilot - Phase 15
+
+Phase 15 ergänzt deterministische historische Decision-Vergleiche und eine
+Watchlist-Attention-Grundlage. Die Priorisierung verwendet strukturierte Runs,
+Decision-Wechsel, Risiko-/Bewertungsänderungen und Datenlücken; kein LLM-Ranking
+und keine Frontend-Änderung sind erforderlich.
+
+```text
+GET /api/v1/stocks/{ticker}/changes
+GET /api/v1/watchlist/attention?limit=3
+```
+
 ### Manueller End-to-End-Test
 
 Für einen vollständigen lokalen Test öffne zwei PowerShell-Fenster. Das erste

@@ -9,6 +9,7 @@ from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app.api_routes.analysis import build_analysis_router
+from app.api_routes.attention import build_attention_router
 from app.api_routes.portfolio import build_portfolio_router
 from app.api_routes.research import build_research_router
 from app.config.settings import get_settings
@@ -109,6 +110,7 @@ def create_app(
     app.include_router(build_portfolio_router(active_broker_store))
     app.include_router(build_research_router(active_store, get_settings()))
     app.include_router(build_analysis_router(get_settings(), active_store))
+    app.include_router(build_attention_router(active_store))
 
     @app.get("/api/v1/health")
     def health() -> dict[str, str]:

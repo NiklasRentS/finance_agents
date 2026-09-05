@@ -179,3 +179,17 @@ def test_persistent_analysis_job_endpoints_list_and_cancel(store: SqlAnalysisSto
     assert cancelled.status_code == 200
     assert cancelled.json()["status"] == "cancelled"
     assert status.json()["status"] == "cancelled"
+
+
+def test_decision_history_and_attention_endpoints(store: SqlAnalysisStore) -> None:
+    run_id = store.save_run(_analysis("AAPL"))
+    client = TestClient(create_app(store=store))
+
+    history = client.get("/api/v1/stocks/AAPL/changes")
+    attention = client.get("/api/v1/watchlist/attention")
+
+    assert history.status_code == 200
+    assert history.json()["current_run_id"] == str(run_id)
+    assert history.json()["previous_run_id"] is None
+    assert attention.status_code == 200
+    assert attention.json()["items"] == []
