@@ -51,6 +51,10 @@ export type ResearchStock = {
   valuation: Record<string, unknown>
   market?: Record<string, unknown> | null
   warnings: string[]
+  risk_signals: Array<{ name: string; score: number; summary: string }>
+  competitive?: { score: number; summary: string } | null
+  scenarios: Array<{ name: string; probability: number; narrative: string }>
+  thesis?: string | null
   financials: Array<{ period: { label?: string }; values: Record<string, ResearchFact> }>
   sources: string[]
   report_available: boolean

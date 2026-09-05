@@ -12,6 +12,9 @@ from pydantic import TypeAdapter
 from sqlalchemy import Engine, create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.agents.competitive import build_competitive_summary
+from app.agents.risk import build_risk_signals
+from app.agents.scenarios import build_scenario_outcomes, build_thesis_statement
 from app.config.settings import Settings
 from app.domain.company import Company
 from app.domain.facts import Confidence, FactKind, Period, SourceRef
@@ -39,6 +42,10 @@ class StoredRun:
     valuation: dict[str, Any]
     market: dict[str, Any] | None
     warnings: list[str]
+    risk_signals: list[dict[str, Any]] | None
+    competitive: dict[str, Any] | None
+    scenarios: list[dict[str, Any]] | None
+    thesis: str | None
     report_markdown: str | None
 
 
@@ -79,6 +86,10 @@ class SqlAnalysisStore(AnalysisStore):
                     valuation=_dump(_VALUATION, analysis.valuation),
                     market=_market_document(analysis),
                     warnings=list(analysis.warnings),
+                    risk_signals=[signal.__dict__ for signal in build_risk_signals(analysis)],
+                    competitive=build_competitive_summary(analysis).__dict__,
+                    scenarios=[scenario.__dict__ for scenario in build_scenario_outcomes(analysis)],
+                    thesis=build_thesis_statement(analysis),
                     report_markdown=report_markdown,
                     facts=_fact_rows(run_id, analysis.history),
                 )
@@ -252,6 +263,10 @@ def _stored_run(row: AnalysisRunRow, company_name: str) -> StoredRun:
         valuation=row.valuation,
         market=row.market,
         warnings=list(row.warnings),
+        risk_signals=row.risk_signals,
+        competitive=row.competitive,
+        scenarios=row.scenarios,
+        thesis=row.thesis,
         report_markdown=row.report_markdown,
     )
 

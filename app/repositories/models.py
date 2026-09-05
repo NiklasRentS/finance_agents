@@ -76,6 +76,10 @@ class AnalysisRunRow(Base):
     valuation: Mapped[dict[str, Any]] = mapped_column(JSON_TYPE)
     market: Mapped[dict[str, Any] | None] = mapped_column(JSON_TYPE)
     warnings: Mapped[list[str]] = mapped_column(JSON_TYPE, default=list)
+    risk_signals: Mapped[list[dict[str, Any]] | None] = mapped_column(JSON_TYPE)
+    competitive: Mapped[dict[str, Any] | None] = mapped_column(JSON_TYPE)
+    scenarios: Mapped[list[dict[str, Any]] | None] = mapped_column(JSON_TYPE)
+    thesis: Mapped[str | None] = mapped_column(Text)
     report_markdown: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 

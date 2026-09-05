@@ -21,6 +21,10 @@ class StockResponse(BaseModel):
     valuation: dict[str, Any]
     market: dict[str, Any] | None
     warnings: list[str]
+    risk_signals: list[dict[str, Any]]
+    competitive: dict[str, Any] | None
+    scenarios: list[dict[str, Any]]
+    thesis: str | None
     financials: list[dict[str, Any]]
     sources: list[str]
     report_available: bool

@@ -304,7 +304,8 @@ Projekt im Aufbau.
 - [x] Read-only-Portfolio-API
 - [x] Persönliches React/TypeScript/Vite-Frontend mit Dashboard, Portfolio, Watchlist und Historie
 - [x] Frontend-Stock-Detailseite mit strukturierten Financials, Valuation und Quellen
-- [ ] Frontend-Szenarien-, Risiko- und Catalyst-Darstellung
+- [x] Strukturierte Persistenz und Frontend-Darstellung für Risiken und Szenarien
+- [ ] Frontend-Catalyst-Darstellung und Analyse-Job-Steuerung
 - [ ] Authentifizierung und Benutzerverwaltung für einen produktiven API-Betrieb
 
 Integrationstests gegen die echte SEC-API laufen separat:

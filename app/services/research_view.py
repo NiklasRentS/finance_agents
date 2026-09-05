@@ -35,6 +35,10 @@ class ResearchViewService:
             "valuation": run.valuation,
             "market": run.market,
             "warnings": run.warnings,
+            "risk_signals": run.risk_signals or [],
+            "competitive": run.competitive,
+            "scenarios": run.scenarios or [],
+            "thesis": run.thesis,
             "financials": [
                 {
                     "period": snapshot.period.model_dump(mode="json"),
