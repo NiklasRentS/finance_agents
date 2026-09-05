@@ -153,6 +153,32 @@ GET /api/v1/portfolio/imports
 Die Routen lesen ausschließlich lokal importierte Daten. Ein Datei-Upload für
 den Import wird erst nach Prüfung eines anonymisierten echten Exports ergänzt.
 
+### Persönliches Frontend (Phase 4)
+
+Das Frontend liegt unabhängig vom Python-Backend in `frontend/` und verwendet
+React, TypeScript, Vite, Recharts und Lucide. Es greift ausschließlich über
+FastAPI auf Daten zu; PostgreSQL, Broker, SEC, Yahoo und Ollama werden nicht
+direkt aus dem Browser angesprochen.
+
+Backend starten:
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn app.api:app --reload
+```
+
+In einem zweiten PowerShell-Fenster:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Der Vite-Entwicklungsserver proxied `/api` lokal an `http://127.0.0.1:8000`.
+Wenn das Backend nicht erreichbar ist, zeigt das Dashboard einen sichtbaren
+Hinweis und anonymisierte Demo-Daten, statt eine leere oder kaputte Oberfläche
+zu rendern.
+
 ### Manueller End-to-End-Test
 
 Für einen vollständigen lokalen Test öffne zwei PowerShell-Fenster. Das erste
@@ -275,7 +301,9 @@ Projekt im Aufbau.
 - [x] FastAPI für Läufe, Historie, Diffs, Alerts und Watchlist
 - [x] Read-only-Broker-Domäne, versionierter Fixture-Adapter und idempotente Persistenz
 - [ ] Mapping eines anonymisierten echten Trade-Republic-Exports
-- [ ] Portfolio-API und Frontend
+- [x] Read-only-Portfolio-API
+- [x] Persönliches React/TypeScript/Vite-Frontend mit Dashboard, Portfolio, Watchlist und Historie
+- [ ] Frontend-Stock-Detailseite mit Financials, Valuation, Szenarien und Quellen
 - [ ] Authentifizierung und Benutzerverwaltung für einen produktiven API-Betrieb
 
 Integrationstests gegen die echte SEC-API laufen separat:
