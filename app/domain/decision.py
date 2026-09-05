@@ -128,3 +128,27 @@ class InvestmentDecisionBrief(BaseModel):
     decision_change: DecisionChange | None = None
     analysis_run_id: str | None = None
     model_metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class InvestmentDecisionExplanation(BaseModel):
+    """Validated LLM explanation layered over an authoritative decision brief."""
+
+    model_config = ConfigDict(frozen=True)
+
+    ticker: str
+    company_name: str
+    decision: DecisionCategory
+    confidence: DecisionConfidence
+    headline: str = Field(min_length=1)
+    summary: str = Field(min_length=1)
+    why_this_matters: str = Field(min_length=1)
+    positive_factors: list[str] = Field(default_factory=list)
+    negative_factors: list[str] = Field(default_factory=list)
+    key_risks: list[str] = Field(default_factory=list)
+    valuation_explanation: str = ""
+    uncertainty: str = ""
+    what_to_watch: list[str] = Field(default_factory=list)
+    beginner_explanation: BeginnerExplanation
+    evidence: list[EvidenceItem] = Field(default_factory=list)
+    disclaimer: str = Field(min_length=1)
+    model_metadata: dict[str, Any] = Field(default_factory=dict)

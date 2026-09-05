@@ -7,6 +7,7 @@ from app.domain.decision import (
     DecisionInput,
     EvidenceItem,
     InvestmentDecisionBrief,
+    InvestmentDecisionExplanation,
     ValuationSummary,
 )
 from app.domain.facts import (
@@ -38,6 +39,7 @@ __all__ = [
     "FinancialHistory",
     "FinancialSnapshot",
     "InvestmentDecisionBrief",
+    "InvestmentDecisionExplanation",
     "Listing",
     "Metric",
     "NumericFact",

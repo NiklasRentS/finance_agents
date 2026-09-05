@@ -233,6 +233,13 @@ Diese Phase enthält bewusst noch keinen Ollama-Aufruf, keine API-Erweiterung,
 keine Frontend-Änderung und keine neue Copilot-History. Die historische
 Vergleichsstruktur ist als Domain-/Engine-Eingabe vorbereitet.
 
+### Investment Decision Copilot - Phase C
+
+Phase C ergänzt den Investment Decision Agent als kontrollierte lokale
+Ollama-Erklärungsschicht über dem deterministischen Decision Brief. Das LLM
+interpretiert ausschließlich vorhandene Evidence, übernimmt Decision und
+Confidence unverändert und kann keine Finanzwerte oder Trading-Aktionen erzeugen.
+
 ### Manueller End-to-End-Test
 
 Für einen vollständigen lokalen Test öffne zwei PowerShell-Fenster. Das erste
