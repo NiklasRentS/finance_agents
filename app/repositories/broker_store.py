@@ -11,6 +11,7 @@ from pathlib import Path
 from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.config.settings import Settings
 from app.domain.broker import BrokerSnapshot, CashBalance, Instrument, Position, Transaction
 from app.repositories.models import (
     BrokerAccountRow,
@@ -44,6 +45,120 @@ class SqlBrokerStore:
 
     def __init__(self, engine: Engine) -> None:
         self._sessions = sessionmaker(engine, expire_on_commit=False)
+
+    @classmethod
+    def from_settings(cls, settings: Settings) -> SqlBrokerStore:
+        from sqlalchemy import create_engine
+
+        return cls(create_engine(settings.database_url, pool_pre_ping=True))
+
+    def list_positions(self, *, account_identifier: str | None = None) -> list[dict[str, object]]:
+        statement = (
+            select(BrokerPositionRow, BrokerInstrumentRow, BrokerAccountRow)
+            .join(BrokerInstrumentRow, BrokerInstrumentRow.id == BrokerPositionRow.instrument_id)
+            .join(BrokerAccountRow, BrokerAccountRow.id == BrokerPositionRow.account_id)
+            .order_by(BrokerInstrumentRow.ticker, BrokerInstrumentRow.isin)
+        )
+        if account_identifier is not None:
+            statement = statement.where(
+                BrokerAccountRow.account_identifier == account_identifier.strip()
+            )
+        with self._sessions() as session:
+            return [
+                {
+                    "account_identifier": account.account_identifier,
+                    "broker": account.broker,
+                    "isin": instrument.isin,
+                    "ticker": instrument.ticker,
+                    "name": instrument.name,
+                    "instrument_currency": instrument.currency,
+                    "quantity": position.quantity,
+                    "average_cost": position.average_cost,
+                    "current_value": position.current_value,
+                    "currency": position.currency,
+                    "imported_at": position.imported_at,
+                }
+                for position, instrument, account in session.execute(statement).all()
+            ]
+
+    def list_cash_balances(
+        self, *, account_identifier: str | None = None
+    ) -> list[dict[str, object]]:
+        statement = (
+            select(BrokerCashBalanceRow, BrokerAccountRow)
+            .join(BrokerAccountRow, BrokerAccountRow.id == BrokerCashBalanceRow.account_id)
+            .order_by(BrokerCashBalanceRow.currency)
+        )
+        if account_identifier is not None:
+            statement = statement.where(
+                BrokerAccountRow.account_identifier == account_identifier.strip()
+            )
+        with self._sessions() as session:
+            return [
+                {
+                    "account_identifier": account.account_identifier,
+                    "broker": account.broker,
+                    "amount": cash.amount,
+                    "currency": cash.currency,
+                    "imported_at": cash.imported_at,
+                }
+                for cash, account in session.execute(statement).all()
+            ]
+
+    def list_transactions(
+        self, *, account_identifier: str | None = None
+    ) -> list[dict[str, object]]:
+        statement = (
+            select(BrokerTransactionRow, BrokerInstrumentRow, BrokerAccountRow)
+            .join(BrokerAccountRow, BrokerAccountRow.id == BrokerTransactionRow.account_id)
+            .outerjoin(
+                BrokerInstrumentRow, BrokerInstrumentRow.id == BrokerTransactionRow.instrument_id
+            )
+            .order_by(BrokerTransactionRow.timestamp.desc())
+        )
+        if account_identifier is not None:
+            statement = statement.where(
+                BrokerAccountRow.account_identifier == account_identifier.strip()
+            )
+        with self._sessions() as session:
+            return [
+                {
+                    "account_identifier": account.account_identifier,
+                    "broker": account.broker,
+                    "timestamp": transaction.timestamp,
+                    "transaction_type": transaction.transaction_type,
+                    "isin": instrument.isin if instrument is not None else None,
+                    "ticker": instrument.ticker if instrument is not None else None,
+                    "quantity": transaction.quantity,
+                    "price": transaction.price,
+                    "fees": transaction.fees,
+                    "taxes": transaction.taxes,
+                    "currency": transaction.currency,
+                    "external_id": transaction.external_id,
+                    "source": transaction.source,
+                }
+                for transaction, instrument, account in session.execute(statement).all()
+            ]
+
+    def list_imports(self) -> list[dict[str, object]]:
+        statement = select(BrokerImportRow, BrokerAccountRow).join(
+            BrokerAccountRow, BrokerAccountRow.id == BrokerImportRow.account_id
+        ).order_by(BrokerImportRow.imported_at.desc())
+        with self._sessions() as session:
+            return [
+                {
+                    "id": row.id,
+                    "account_identifier": account.account_identifier,
+                    "broker": row.broker,
+                    "source": row.source,
+                    "imported_at": row.imported_at,
+                    "records_read": row.records_read,
+                    "records_new": row.records_new,
+                    "records_duplicate": row.records_duplicate,
+                    "errors": row.errors,
+                }
+                for row, account in session.execute(statement).all()
+            ]
 
     def import_snapshot(
         self, snapshot: BrokerSnapshot, *, source: Path | str

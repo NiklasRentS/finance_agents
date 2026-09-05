@@ -140,6 +140,19 @@ Ein anonymisierter echter Export kann später gegen dieses Format geprüft und
 mit einem konkreten Mapping ergänzt werden. Persönliche Brokerdaten bleiben
 lokal und werden nicht an das LLM gesendet.
 
+Die read-only Portfolio-Abfragen sind über einen separaten API-Router verfügbar:
+
+```text
+GET /api/v1/portfolio
+GET /api/v1/portfolio/positions
+GET /api/v1/portfolio/cash
+GET /api/v1/portfolio/transactions
+GET /api/v1/portfolio/imports
+```
+
+Die Routen lesen ausschließlich lokal importierte Daten. Ein Datei-Upload für
+den Import wird erst nach Prüfung eines anonymisierten echten Exports ergänzt.
+
 ### Manueller End-to-End-Test
 
 Für einen vollständigen lokalen Test öffne zwei PowerShell-Fenster. Das erste

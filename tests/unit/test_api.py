@@ -1,28 +1,37 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import Engine, create_engine
 from sqlalchemy.pool import StaticPool
 
 from app.api import create_app
+from app.providers.trade_republic.export import TradeRepublicExportProvider
 from app.repositories.analysis_store import SqlAnalysisStore
+from app.repositories.broker_store import SqlBrokerStore
 from app.services.analysis import analyse_company
 from tests.fakes import CompleteFakeFundamentals, ConfigurableFakeMarketData
 
 
 @pytest.fixture
-def store() -> Iterator[SqlAnalysisStore]:
-    engine = create_engine(
+def engine() -> Iterator[Engine]:
+    created = create_engine(
         "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
     )
+
+    yield created
+    created.dispose()
+
+
+@pytest.fixture
+def store(engine: Engine) -> Iterator[SqlAnalysisStore]:
     store = SqlAnalysisStore(engine)
     store.create_schema()
     yield store
     store.close()
-    engine.dispose()
 
 
 def _analysis(ticker: str = "EXMP") -> object:
@@ -31,6 +40,10 @@ def _analysis(ticker: str = "EXMP") -> object:
         fundamentals=CompleteFakeFundamentals(),
         market_data=ConfigurableFakeMarketData(),
     )
+
+
+def _broker_store(engine: Engine) -> SqlBrokerStore:
+    return SqlBrokerStore(engine)
 
 
 def test_runs_endpoint_lists_saved_runs(store: SqlAnalysisStore) -> None:
@@ -105,3 +118,25 @@ def test_alerts_endpoint_reports_large_run_to_run_changes(store: SqlAnalysisStor
     assert {"metric", "percent_change", "base_run_id", "other_run_id"} <= set(
         payload["alerts"][0]
     )
+
+
+def test_portfolio_endpoints_expose_local_import_as_read_only_data(
+    store: SqlAnalysisStore, engine: Engine
+) -> None:
+    fixture = Path(__file__).parents[1] / "fixtures" / "trade_republic_v1.json"
+    broker_store = _broker_store(engine)
+    snapshot = TradeRepublicExportProvider().import_snapshot(fixture)
+    broker_store.import_snapshot(snapshot, source=fixture)
+
+    client = TestClient(create_app(store=store, broker_store=broker_store))
+    portfolio = client.get("/api/v1/portfolio")
+    positions = client.get("/api/v1/portfolio/positions?account_identifier=fixture-account-001")
+    transactions = client.get("/api/v1/portfolio/transactions")
+    imports = client.get("/api/v1/portfolio/imports")
+
+    assert portfolio.status_code == 200
+    assert len(portfolio.json()["positions"]) == 2
+    assert {item["currency"] for item in portfolio.json()["cash"]} == {"EUR", "USD"}
+    assert positions.json()[0]["isin"]
+    assert len(transactions.json()) == 3
+    assert imports.json()[0]["records_new"] == 3
