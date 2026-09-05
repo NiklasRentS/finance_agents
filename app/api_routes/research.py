@@ -7,7 +7,9 @@ from typing import Any, cast
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from app.config.settings import Settings
 from app.repositories.analysis_store import SqlAnalysisStore
+from app.services.decision_api import DecisionApiService
 from app.services.research_view import ResearchViewService
 
 
@@ -32,9 +34,10 @@ class StockResponse(BaseModel):
     report_available: bool
 
 
-def build_research_router(store: SqlAnalysisStore) -> APIRouter:
+def build_research_router(store: SqlAnalysisStore, settings: Settings) -> APIRouter:
     router = APIRouter(prefix="/api/v1/stocks", tags=["research"])
     service = ResearchViewService(store)
+    decision_service = DecisionApiService(store, settings)
 
     @router.get("/{ticker}", response_model=StockResponse)
     def stock(ticker: str) -> dict[str, Any]:
@@ -73,12 +76,22 @@ def build_research_router(store: SqlAnalysisStore) -> APIRouter:
 
     @router.get("/{ticker}/decision")
     def decision(ticker: str) -> dict[str, Any]:
-        result = service.latest_stock(ticker)
-        if result is None:
-            raise HTTPException(status_code=404, detail="no saved analysis for ticker")
-        brief = result.get("decision_brief")
+        try:
+            brief = decision_service.latest_brief(ticker)
+        except ValueError as exc:
+            raise HTTPException(status_code=500, detail="stored decision brief is invalid") from exc
         if brief is None:
             raise HTTPException(status_code=404, detail="no decision brief for ticker")
-        return cast(dict[str, Any], brief)
+        return decision_service.dump(brief)
+
+    @router.post("/{ticker}/decision/explanation")
+    def decision_explanation(ticker: str) -> dict[str, Any]:
+        try:
+            explanation = decision_service.explain_latest(ticker)
+        except LookupError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        return decision_service.dump(explanation)
 
     return router

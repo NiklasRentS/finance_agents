@@ -247,6 +247,14 @@ bestehenden Run als strukturiertes JSON. Die API liefert ihn ohne Markdown-
 Parsing über `GET /api/v1/stocks/{ticker}/decision` aus. Es gibt weiterhin keine
 Frontend-, Scheduler- oder Broker-Integration in dieser Phase.
 
+### Investment Decision Copilot - Phase 13
+
+Phase 13 ergänzt eine Backend-Servicegrenze für den persistierten Decision Brief
+und eine optionale strukturierte Ollama-Erklärung. Der deterministische Brief
+bleibt autoritativ; das LLM liefert ausschließlich eine validierte Erklärung.
+Die Erklärung ist über `POST /api/v1/stocks/{ticker}/decision/explanation`
+verfügbar. Frontend, Scheduler und Broker bleiben unverändert.
+
 ### Manueller End-to-End-Test
 
 Für einen vollständigen lokalen Test öffne zwei PowerShell-Fenster. Das erste
