@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { ArrowLeft, ArrowUpRight, FileText, ShieldCheck } from 'lucide-react'
-import { api, type ResearchStock } from './api'
+import { ArrowLeft, ArrowUpRight, FileText, ShieldCheck, Sparkles } from 'lucide-react'
+import { api, type DecisionBrief, type DecisionExplanation, type ResearchStock } from './api'
 
 type StockDetailProps = { ticker: string; onBack: () => void }
 
@@ -19,6 +19,9 @@ function display(value: unknown, unit?: string | null) {
 export function StockDetail({ ticker, onBack }: StockDetailProps) {
   const [stock, setStock] = useState<ResearchStock | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [explanation, setExplanation] = useState<DecisionExplanation | null>(null)
+  const [explanationError, setExplanationError] = useState<string | null>(null)
+  const [explanationLoading, setExplanationLoading] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -29,6 +32,18 @@ export function StockDetail({ ticker, onBack }: StockDetailProps) {
     })
     return () => { active = false }
   }, [ticker])
+
+  async function explainDecision() {
+    setExplanationLoading(true)
+    setExplanationError(null)
+    try {
+      setExplanation(await api.decisionExplanation(ticker))
+    } catch {
+      setExplanationError('Die lokale Erklärung konnte nicht geladen werden.')
+    } finally {
+      setExplanationLoading(false)
+    }
+  }
 
   if (error) return <section className="view-stack"><button className="text-button" onClick={onBack}><ArrowLeft size={15} /> Back to research</button><div className="detail-empty"><FileText size={24} /><strong>{error}</strong><span>Run an analysis from the CLI first, then refresh this view.</span></div></section>
   if (!stock) return <section className="detail-loading"><span className="status-dot" /> Loading structured research for {ticker}...</section>
@@ -42,6 +57,7 @@ export function StockDetail({ ticker, onBack }: StockDetailProps) {
     <button className="text-button back-button" onClick={onBack}><ArrowLeft size={15} /> Back to research</button>
     <div className="detail-hero"><div><span className="section-kicker">STRUCTURED RESEARCH</span><h2>{stock.ticker} <span>{stock.company_name}</span></h2><p>Latest saved analysis · {new Date(stock.generated_at).toLocaleString('en-GB')}</p></div><span className="source-tag"><ShieldCheck size={12} /> Source-linked</span></div>
     {stock.warnings.length > 0 && <div className="notice"><FileText size={16} />{stock.warnings[0]}</div>}
+    {stock.decision_brief && <DecisionCopilot brief={stock.decision_brief} explanation={explanation} explanationError={explanationError} explanationLoading={explanationLoading} onExplain={() => void explainDecision()} />}
     <div className="metric-grid detail-metrics"><Metric label="Fair value" value={display(fairValue, stock.currency ?? undefined)} /><Metric label="Revenue" value={display(values.revenue?.value, values.revenue?.unit)} /><Metric label="Free cash flow" value={display(values.free_cash_flow?.value, values.free_cash_flow?.unit)} /><Metric label="ROIC" value={display(values.roic?.value, '%')} /></div>
     <div className="detail-grid"><article className="panel"><div className="panel-heading"><div><span className="section-kicker">FINANCIALS</span><h2>Reported metrics</h2></div><span className="source-tag">{latest?.period.label ?? 'Latest period'}</span></div><div className="financial-list">{['revenue', 'revenue_growth', 'operating_margin', 'eps_diluted', 'free_cash_flow', 'roic', 'total_debt'].map((metric) => <div className="financial-row" key={metric}><span>{metric.split('_').join(' ')}</span><strong>{display(values[metric]?.value, values[metric]?.unit)}</strong></div>)}</div></article><article className="panel"><div className="panel-heading"><div><span className="section-kicker">VALUATION</span><h2>Model outputs</h2></div><ArrowUpRight size={17} className="muted-icon" /></div><div className="financial-list"><div className="financial-row"><span>Fair value / share</span><strong>{display(fairValue, stock.currency ?? undefined)}</strong></div><div className="financial-row"><span>Current price</span><strong>{display((stock.market?.quote as Record<string, unknown> | undefined)?.price && ((stock.market?.quote as Record<string, unknown>).price as Record<string, unknown>).value, stock.currency ?? undefined)}</strong></div><div className="financial-row"><span>WACC</span><strong>{display((stock.assumptions as Record<string, unknown>).wacc, '%')}</strong></div><div className="financial-row"><span>Terminal growth</span><strong>{display((stock.assumptions as Record<string, unknown>).terminal_growth, '%')}</strong></div></div><div className="detail-note">Model outputs are deterministic and remain tied to the saved assumptions.</div></article></div>
     <div className="detail-grid"><article className="panel"><div className="panel-heading"><div><span className="section-kicker">RISKS</span><h2>Observed signals</h2></div><ShieldCheck size={17} className="muted-icon" /></div><div className="insight-list">{stock.risk_signals.length ? stock.risk_signals.map((signal) => <div className="insight-row" key={signal.name}><div><strong>{signal.name}</strong><small>{signal.summary}</small></div><b>{signal.score.toFixed(0)}</b></div>) : <div className="empty-state">No structured risk signals available.</div>}</div></article><article className="panel"><div className="panel-heading"><div><span className="section-kicker">SCENARIOS</span><h2>Research framing</h2></div><span className="source-tag">No recommendation</span></div><div className="insight-list">{stock.scenarios.map((scenario) => <div className="insight-row" key={scenario.name}><div><strong>{scenario.name}</strong><small>{scenario.narrative}</small></div><b>{(scenario.probability * 100).toFixed(0)}%</b></div>)}</div></article></div>
@@ -52,3 +68,29 @@ export function StockDetail({ ticker, onBack }: StockDetailProps) {
 }
 
 function Metric({ label, value }: { label: string; value: string }) { return <article className="metric-card"><span>{label}</span><strong>{value}</strong><small>Latest structured value</small></article> }
+
+function decisionLabel(decision: DecisionBrief['decision']) {
+  return {
+    ATTRACTIVE: 'ATTRACTIVE',
+    WATCH: 'WATCH',
+    CAUTION: 'CAUTION',
+    REVIEW_THESIS: 'REVIEW THESIS',
+    INSUFFICIENT_DATA: 'INSUFFICIENT DATA',
+  }[decision]
+}
+
+function DecisionCopilot({ brief, explanation, explanationError, explanationLoading, onExplain }: { brief: DecisionBrief; explanation: DecisionExplanation | null; explanationError: string | null; explanationLoading: boolean; onExplain: () => void }) {
+  return <article className={`panel copilot-card decision-${brief.decision.toLowerCase()}`}>
+    <div className="panel-heading"><div><span className="section-kicker">INVESTMENT DECISION COPILOT</span><h2>What the structured evidence suggests</h2></div><span className="decision-badge"><Sparkles size={13} /> {decisionLabel(brief.decision)}</span></div>
+    <div className="copilot-meta"><span>Confidence: <strong>{brief.confidence}</strong></span><span>{brief.confidence_reason}</span></div>
+    <p className="copilot-summary">{explanation?.summary || brief.summary}</p>
+    <div className="copilot-columns"><CopilotList title="Why" items={[brief.why, ...brief.positive_factors].filter(Boolean)} tone="positive" /><CopilotList title="What speaks against" items={[...brief.negative_factors, ...brief.key_risks].filter(Boolean)} tone="warning" /><CopilotList title="What to watch" items={brief.monitoring_points} tone="neutral" /></div>
+    {explanation && <div className="copilot-explanation"><span className="section-kicker">BEGINNER EXPLANATION</span><p>{explanation.beginner_explanation.explanation}</p><small>{explanation.beginner_explanation.why_it_matters}</small></div>}
+    {explanationError && <div className="copilot-error">{explanationError}</div>}
+    <div className="copilot-footer"><span><ShieldCheck size={13} /> {brief.evidence.length} evidence items</span><button className="secondary-button" onClick={onExplain} disabled={explanationLoading}><Sparkles size={14} /> {explanationLoading ? 'Explaining...' : explanation ? 'Refresh explanation' : 'Explain this decision'}</button></div>
+  </article>
+}
+
+function CopilotList({ title, items, tone }: { title: string; items: string[]; tone: 'positive' | 'warning' | 'neutral' }) {
+  return <div className={`copilot-list ${tone}`}><strong>{title}</strong>{items.length ? items.slice(0, 3).map((item, index) => <p key={`${title}-${index}`}>{item}</p>) : <p>Keine ausreichenden Daten.</p>}</div>
+}

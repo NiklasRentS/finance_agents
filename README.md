@@ -255,6 +255,14 @@ bleibt autoritativ; das LLM liefert ausschließlich eine validierte Erklärung.
 Die Erklärung ist über `POST /api/v1/stocks/{ticker}/decision/explanation`
 verfügbar. Frontend, Scheduler und Broker bleiben unverändert.
 
+### Investment Decision Copilot - Phase 14
+
+Die Stock-Detailseite enthält jetzt eine strukturierte Copilot-Card. Sie zeigt
+Decision, Confidence, Begründung, positive und negative Faktoren, Risiken,
+Monitoring-Punkte und die Evidence-Anzahl. Eine optionale Explain-Aktion ruft
+die validierte lokale LLM-Erklärung ab. Finanzwerte und Kategorien werden nicht
+im Browser berechnet oder verändert.
+
 ### Manueller End-to-End-Test
 
 Für einen vollständigen lokalen Test öffne zwei PowerShell-Fenster. Das erste
