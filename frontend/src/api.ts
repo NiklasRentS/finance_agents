@@ -39,6 +39,7 @@ export type Alert = {
   percent_change?: number | null
   delta?: number | null
 }
+export type AnalysisJob = { id: string; ticker: string; status: string; created_at: string; run_id?: string | null; error?: string | null }
 
 export type ResearchFact = { value?: string | number | null; unit?: string | null }
 export type ResearchStock = {
@@ -81,4 +82,9 @@ export const api = {
   portfolio: () => request<Portfolio>('/api/v1/portfolio'),
   alerts: (ticker: string) => request<{ alerts: Alert[] }>(`/api/v1/alerts?ticker=${encodeURIComponent(ticker)}&threshold=0.1`),
   stock: (ticker: string) => request<ResearchStock>(`/api/v1/stocks/${encodeURIComponent(ticker)}`),
+  startAnalysis: async (ticker: string) => {
+    const response = await fetch(`${apiBase}/api/v1/analysis`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) })
+    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`)
+    return response.json() as Promise<AnalysisJob>
+  },
 }

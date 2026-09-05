@@ -179,6 +179,18 @@ Wenn das Backend nicht erreichbar ist, zeigt das Dashboard einen sichtbaren
 Hinweis und anonymisierte Demo-Daten, statt eine leere oder kaputte Oberfläche
 zu rendern.
 
+Eine Analyse kann aus dem Frontend oder direkt über die API gestartet werden:
+
+```text
+POST /api/v1/analysis       {"ticker":"AAPL"}
+GET  /api/v1/analysis/{id}
+```
+
+Der POST-Aufruf liefert `202 Accepted` und eine Job-ID. Die eigentliche
+Analyse läuft im Backend und speichert nach erfolgreichem Abschluss einen
+normalen Research-Run. Bei einem Fehler wird der Jobstatus auf `failed` gesetzt;
+es werden keine Research-Berechnungen im Browser ausgeführt.
+
 ### Manueller End-to-End-Test
 
 Für einen vollständigen lokalen Test öffne zwei PowerShell-Fenster. Das erste
@@ -305,7 +317,8 @@ Projekt im Aufbau.
 - [x] Persönliches React/TypeScript/Vite-Frontend mit Dashboard, Portfolio, Watchlist und Historie
 - [x] Frontend-Stock-Detailseite mit strukturierten Financials, Valuation und Quellen
 - [x] Strukturierte Persistenz und Frontend-Darstellung für Risiken und Szenarien
-- [ ] Frontend-Catalyst-Darstellung und Analyse-Job-Steuerung
+- [x] Analyse-Job-Endpunkt und Frontend-Startstatus
+- [ ] Frontend-Catalyst-Darstellung und produktiver Scheduler
 - [ ] Authentifizierung und Benutzerverwaltung für einen produktiven API-Betrieb
 
 Integrationstests gegen die echte SEC-API laufen separat:
