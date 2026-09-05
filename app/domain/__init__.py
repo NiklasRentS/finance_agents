@@ -1,4 +1,14 @@
 from app.domain.company import Company, Listing
+from app.domain.decision import (
+    BeginnerExplanation,
+    DecisionCategory,
+    DecisionChange,
+    DecisionConfidence,
+    DecisionInput,
+    EvidenceItem,
+    InvestmentDecisionBrief,
+    ValuationSummary,
+)
 from app.domain.facts import (
     NOT_AVAILABLE,
     Confidence,
@@ -14,13 +24,20 @@ from app.domain.financials import FinancialHistory, FinancialSnapshot, Metric, N
 
 __all__ = [
     "NOT_AVAILABLE",
+    "BeginnerExplanation",
     "Company",
     "Confidence",
     "ConflictedFact",
+    "DecisionCategory",
+    "DecisionChange",
+    "DecisionConfidence",
+    "DecisionInput",
+    "EvidenceItem",
     "Fact",
     "FactKind",
     "FinancialHistory",
     "FinancialSnapshot",
+    "InvestmentDecisionBrief",
     "Listing",
     "Metric",
     "NumericFact",
@@ -28,4 +45,5 @@ __all__ = [
     "PeriodType",
     "SourceRef",
     "SourceTier",
+    "ValuationSummary",
 ]

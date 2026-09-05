@@ -217,6 +217,22 @@ zeilenbereinigte Diagnose gespeichert; Zugangsdaten, Tokens und Tracebacks
 werden nicht persistiert. Ein Scheduler ist ausdrücklich nicht Teil dieser
 Phase.
 
+### Investment Decision Copilot - Phase B
+
+Phase B enthält ausschließlich den LLM-freien, deterministischen Kern des
+Investment Decision Copilots. Er baut auf bestehenden Facts, Sources, DCF-,
+Multiples-, Risiko-, Szenario-, Thesis- und Earnings-Daten auf und erzeugt ein
+strukturiertes `InvestmentDecisionBrief`.
+
+Die neutralen Kategorien sind `ATTRACTIVE`, `WATCH`, `CAUTION`,
+`REVIEW_THESIS` und `INSUFFICIENT_DATA`. Confidence beschreibt die Qualität
+und Konsistenz der Evidenz, nicht die Wahrscheinlichkeit zukünftiger Renditen.
+Jede Evidence-Aussage muss auf vorhandene Fact-IDs und SourceRefs zeigen.
+
+Diese Phase enthält bewusst noch keinen Ollama-Aufruf, keine API-Erweiterung,
+keine Frontend-Änderung und keine neue Copilot-History. Die historische
+Vergleichsstruktur ist als Domain-/Engine-Eingabe vorbereitet.
+
 ### Manueller End-to-End-Test
 
 Für einen vollständigen lokalen Test öffne zwei PowerShell-Fenster. Das erste
