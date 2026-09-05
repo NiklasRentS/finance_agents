@@ -88,6 +88,27 @@ class AnalysisRunRow(Base):
     facts: Mapped[list[RunFactRow]] = relationship(
         back_populates="run", cascade="all, delete-orphan"
     )
+    jobs: Mapped[list[AnalysisJobRow]] = relationship(back_populates="analysis_run")
+
+
+class AnalysisJobRow(Base):
+    __tablename__ = "analysis_jobs"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    job_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, index=True)
+    ticker: Mapped[str] = mapped_column(String(16), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    status_message: Mapped[str | None] = mapped_column(String(255))
+    error_message: Mapped[str | None] = mapped_column(Text)
+    result_reference: Mapped[str | None] = mapped_column(String(255))
+    analysis_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("analysis_runs.id", ondelete="SET NULL"), index=True
+    )
+
+    analysis_run: Mapped[AnalysisRunRow | None] = relationship(back_populates="jobs")
 
 
 class RunFactRow(Base):

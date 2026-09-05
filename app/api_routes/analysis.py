@@ -19,10 +19,15 @@ class AnalysisRequest(BaseModel):
 
 class AnalysisJobResponse(BaseModel):
     id: str
+    job_type: str
     ticker: str
     status: str
     created_at: str
+    started_at: str | None
+    finished_at: str | None
+    status_message: str | None
     run_id: str | None
+    result_reference: str | None
     error: str | None
 
 
@@ -51,5 +56,21 @@ def build_analysis_router(settings: Settings, store: SqlAnalysisStore) -> APIRou
         if job is None:
             raise HTTPException(status_code=404, detail="analysis job not found")
         return service.snapshot(job)
+
+    @router.get("", response_model=list[AnalysisJobResponse])
+    def list_analysis_jobs(limit: int = 20) -> list[dict[str, Any]]:
+        if limit < 1 or limit > 100:
+            raise HTTPException(status_code=400, detail="limit must be between 1 and 100")
+        return [service.snapshot(job) for job in service.list(limit=limit)]
+
+    @router.post("/{job_id}/cancel", response_model=AnalysisJobResponse)
+    def cancel_analysis(job_id: str) -> dict[str, Any]:
+        try:
+            identifier = uuid.UUID(job_id)
+            return service.snapshot(service.cancel(identifier))
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="analysis job not found") from exc
 
     return router

@@ -20,9 +20,17 @@ from app.config.settings import Settings
 from app.domain.company import Company
 from app.domain.facts import Confidence, FactKind, Period, SourceRef
 from app.domain.financials import FinancialHistory, FinancialSnapshot, Metric, NumericFact
+from app.domain.jobs import JobStatus, validate_transition
 from app.ports.market_data import Quote
 from app.ports.storage import AnalysisStore, RunSummary
-from app.repositories.models import AnalysisRunRow, Base, CompanyRow, RunFactRow, WatchlistRow
+from app.repositories.models import (
+    AnalysisJobRow,
+    AnalysisRunRow,
+    Base,
+    CompanyRow,
+    RunFactRow,
+    WatchlistRow,
+)
 from app.services.analysis import CompanyAnalysis
 from app.services.valuation import DcfAssumptions, DcfResult, Multiples
 
@@ -51,6 +59,21 @@ class StoredRun:
     report_markdown: str | None
 
 
+@dataclass(frozen=True)
+class StoredJob:
+    id: uuid.UUID
+    job_type: str
+    status: JobStatus
+    ticker: str
+    created_at: datetime
+    started_at: datetime | None
+    finished_at: datetime | None
+    status_message: str | None
+    error_message: str | None
+    result_reference: str | None
+    analysis_run_id: uuid.UUID | None
+
+
 class SqlAnalysisStore(AnalysisStore):
     """Stores runs in a relational database."""
 
@@ -68,6 +91,63 @@ class SqlAnalysisStore(AnalysisStore):
 
     def close(self) -> None:
         self._engine.dispose()
+
+    def create_job(self, *, ticker: str, job_type: str = "analysis") -> StoredJob:
+        row = AnalysisJobRow(
+            id=uuid.uuid4(),
+            job_type=job_type,
+            status=JobStatus.QUEUED.value,
+            ticker=ticker.strip().upper(),
+            created_at=datetime.now(UTC),
+            status_message="queued",
+        )
+        with self._sessions.begin() as session:
+            session.add(row)
+            session.flush()
+            return _stored_job(row)
+
+    def get_job(self, job_id: uuid.UUID) -> StoredJob | None:
+        with self._sessions() as session:
+            row = session.get(AnalysisJobRow, job_id)
+            return None if row is None else _stored_job(row)
+
+    def list_jobs(self, *, limit: int = 20) -> list[StoredJob]:
+        statement = select(AnalysisJobRow).order_by(AnalysisJobRow.created_at.desc()).limit(limit)
+        with self._sessions() as session:
+            return [_stored_job(row) for row in session.scalars(statement).all()]
+
+    def transition_job(
+        self,
+        job_id: uuid.UUID,
+        target: JobStatus,
+        *,
+        status_message: str | None = None,
+        error_message: str | None = None,
+        analysis_run_id: uuid.UUID | None = None,
+    ) -> StoredJob:
+        with self._sessions.begin() as session:
+            row = session.get(AnalysisJobRow, job_id)
+            if row is None:
+                raise KeyError(f"unknown analysis job: {job_id}")
+            current = JobStatus(row.status)
+            validate_transition(current, target)
+            now = datetime.now(UTC)
+            row.status = target.value
+            row.status_message = status_message
+            row.error_message = error_message
+            if target is JobStatus.RUNNING:
+                row.started_at = now
+            if target in {
+                JobStatus.COMPLETED,
+                JobStatus.FAILED,
+                JobStatus.CANCELLED,
+            }:
+                row.finished_at = now
+            if analysis_run_id is not None:
+                row.analysis_run_id = analysis_run_id
+                row.result_reference = str(analysis_run_id)
+            session.flush()
+            return _stored_job(row)
 
     def save_run(
         self, analysis: CompanyAnalysis, *, report_markdown: str | None = None
@@ -272,6 +352,22 @@ def _stored_run(row: AnalysisRunRow, company_name: str) -> StoredRun:
         thesis=row.thesis,
         catalysts=row.catalysts,
         report_markdown=row.report_markdown,
+    )
+
+
+def _stored_job(row: AnalysisJobRow) -> StoredJob:
+    return StoredJob(
+        id=row.id,
+        job_type=row.job_type,
+        status=JobStatus(row.status),
+        ticker=row.ticker,
+        created_at=_as_utc(row.created_at),
+        started_at=None if row.started_at is None else _as_utc(row.started_at),
+        finished_at=None if row.finished_at is None else _as_utc(row.finished_at),
+        status_message=row.status_message,
+        error_message=row.error_message,
+        result_reference=row.result_reference,
+        analysis_run_id=row.analysis_run_id,
     )
 
 

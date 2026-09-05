@@ -197,6 +197,26 @@ Catalyst-Observations persistiert und auf der Stock-Detailseite separat von
 Risiken, Szenarien und dem menschenlesbaren Report angezeigt. Diese Hinweise
 sind faktengebundene Research-Beobachtungen und keine Handlungsaufforderungen.
 
+### Persistente Analysis Jobs
+
+Analysis Jobs werden in PostgreSQL in `analysis_jobs` persistiert. Ein
+Neustart der FastAPI-Anwendung verliert dadurch weder Status noch Fehlerdetails.
+Jobs verwenden die Zustände `queued`, `running`, `completed`, `failed` und
+`cancelled`. Ein abgeschlossener Job verweist über `analysis_run_id` direkt auf
+den bestehenden Research-Run; es entsteht keine zweite Analysehistorie.
+
+```text
+POST /api/v1/analysis                 - Job erstellen und starten
+GET  /api/v1/analysis                 - letzte Jobs auflisten
+GET  /api/v1/analysis/{job_id}        - persistenten Status abrufen
+POST /api/v1/analysis/{job_id}/cancel - queued/running Job abbrechen
+```
+
+Die Migration dafür ist `0006_analysis_jobs`. Fehler werden als begrenzte,
+zeilenbereinigte Diagnose gespeichert; Zugangsdaten, Tokens und Tracebacks
+werden nicht persistiert. Ein Scheduler ist ausdrücklich nicht Teil dieser
+Phase.
+
 ### Manueller End-to-End-Test
 
 Für einen vollständigen lokalen Test öffne zwei PowerShell-Fenster. Das erste
