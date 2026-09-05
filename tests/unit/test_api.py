@@ -140,3 +140,23 @@ def test_portfolio_endpoints_expose_local_import_as_read_only_data(
     assert positions.json()[0]["isin"]
     assert len(transactions.json()) == 3
     assert imports.json()[0]["records_new"] == 3
+
+
+def test_stock_endpoints_expose_structured_research_without_parsing_markdown(
+    store: SqlAnalysisStore,
+) -> None:
+    run_id = store.save_run(_analysis("AAPL"), report_markdown="# Human report")
+    client = TestClient(create_app(store=store))
+
+    stock = client.get("/api/v1/stocks/AAPL")
+    financials = client.get("/api/v1/stocks/AAPL/financials")
+    valuation = client.get("/api/v1/stocks/AAPL/valuation")
+    report = client.get("/api/v1/stocks/AAPL/reports")
+
+    assert stock.status_code == 200
+    assert stock.json()["run_id"] == str(run_id)
+    assert stock.json()["financials"]
+    assert stock.json()["sources"]
+    assert financials.json()[-1]["values"]["revenue"]["value"] is not None
+    assert valuation.json()["valuation"]["value_per_share"]
+    assert report.json() == {"run_id": str(run_id), "markdown": "# Human report"}

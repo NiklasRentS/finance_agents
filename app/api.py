@@ -9,6 +9,7 @@ from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app.api_routes.portfolio import build_portfolio_router
+from app.api_routes.research import build_research_router
 from app.config.settings import get_settings
 from app.repositories.analysis_store import SqlAnalysisStore
 from app.repositories.broker_store import SqlBrokerStore
@@ -105,6 +106,7 @@ def create_app(
     active_store = store or SqlAnalysisStore.from_settings(get_settings())
     active_broker_store = broker_store or SqlBrokerStore.from_settings(get_settings())
     app.include_router(build_portfolio_router(active_broker_store))
+    app.include_router(build_research_router(active_store))
 
     @app.get("/api/v1/health")
     def health() -> dict[str, str]:

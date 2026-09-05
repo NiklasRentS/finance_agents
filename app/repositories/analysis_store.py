@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
@@ -25,6 +26,20 @@ _ASSUMPTIONS = TypeAdapter(DcfAssumptions)
 _VALUATION = TypeAdapter(DcfResult)
 _MULTIPLES = TypeAdapter(Multiples)
 _QUOTE = TypeAdapter(Quote)
+
+
+@dataclass(frozen=True)
+class StoredRun:
+    id: uuid.UUID
+    ticker: str
+    company_name: str
+    generated_at: datetime
+    currency: str | None
+    assumptions: dict[str, Any]
+    valuation: dict[str, Any]
+    market: dict[str, Any] | None
+    warnings: list[str]
+    report_markdown: str | None
 
 
 class SqlAnalysisStore(AnalysisStore):
@@ -105,6 +120,34 @@ class SqlAnalysisStore(AnalysisStore):
         with self._sessions() as session:
             run = session.get(AnalysisRunRow, run_id)
             return run.report_markdown if run is not None else None
+
+    def load_latest_run(self, ticker: str) -> StoredRun | None:
+        statement = (
+            select(AnalysisRunRow, CompanyRow.name)
+            .join(CompanyRow, CompanyRow.id == AnalysisRunRow.company_id)
+            .where(AnalysisRunRow.ticker == ticker.strip().upper())
+            .order_by(AnalysisRunRow.generated_at.desc())
+            .limit(1)
+        )
+        with self._sessions() as session:
+            result = session.execute(statement).first()
+            if result is None:
+                return None
+            row, company_name = result
+            return _stored_run(row, company_name)
+
+    def load_run_document(self, run_id: uuid.UUID) -> StoredRun | None:
+        statement = (
+            select(AnalysisRunRow, CompanyRow.name)
+            .join(CompanyRow, CompanyRow.id == AnalysisRunRow.company_id)
+            .where(AnalysisRunRow.id == run_id)
+        )
+        with self._sessions() as session:
+            result = session.execute(statement).first()
+            if result is None:
+                return None
+            row, company_name = result
+            return _stored_run(row, company_name)
 
     def add_watchlist_item(
         self, *, ticker: str, company_name: str, notes: str | None = None
@@ -196,6 +239,21 @@ def _market_document(analysis: CompanyAnalysis) -> dict[str, Any] | None:
         "quote": None if analysis.quote is None else _dump(_QUOTE, analysis.quote),
         "multiples": None if analysis.multiples is None else _dump(_MULTIPLES, analysis.multiples),
     }
+
+
+def _stored_run(row: AnalysisRunRow, company_name: str) -> StoredRun:
+    return StoredRun(
+        id=row.id,
+        ticker=row.ticker,
+        company_name=company_name,
+        generated_at=_as_utc(row.generated_at),
+        currency=row.currency,
+        assumptions=row.assumptions,
+        valuation=row.valuation,
+        market=row.market,
+        warnings=list(row.warnings),
+        report_markdown=row.report_markdown,
+    )
 
 
 def _fact_rows(run_id: uuid.UUID, history: FinancialHistory) -> list[RunFactRow]:
