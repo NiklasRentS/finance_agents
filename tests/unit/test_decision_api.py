@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from typing import Any
 
-import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.pool import StaticPool
 
@@ -12,7 +11,6 @@ from app.ports.llm import LlmClient, LlmMessage, LlmResponse
 from app.repositories.analysis_store import SqlAnalysisStore
 from app.services.analysis import analyse_company
 from app.services.decision_api import DecisionApiService
-from app.services.investment_decision_agent import InvestmentDecisionAgentError
 from tests.fakes import CompleteFakeFundamentals, ConfigurableFakeMarketData
 
 
@@ -102,10 +100,12 @@ def test_service_explains_using_existing_llm_port() -> None:
     store.close()
 
 
-def test_service_rejects_unavailable_llm() -> None:
+def test_service_uses_transparent_fallback_when_llm_is_unavailable() -> None:
     store = make_store()
     service = DecisionApiService(store, Settings(), llm=FakeLlm({}, available=False))
 
-    with pytest.raises(InvestmentDecisionAgentError):
-        service.explain_latest("EXMP")
+    explanation = service.explain_latest("EXMP")
+
+    assert explanation.model_metadata["provider"] == "deterministic-fallback"
+    assert "Keine Anlageberatung" in explanation.disclaimer
     store.close()
