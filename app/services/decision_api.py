@@ -41,7 +41,12 @@ class DecisionApiService:
         brief = self.latest_brief(ticker)
         if brief is None:
             raise LookupError("no persisted decision brief for ticker")
-        llm = self._llm or OllamaClient.build(self._settings)
+        llm = self._llm or OllamaClient(
+            base_url=self._settings.ollama_base_url,
+            model=self._settings.ollama_model,
+            timeout=float(self._settings.decision_explanation_timeout_seconds),
+            temperature=self._settings.llm_temperature,
+        )
         should_close = self._llm is None
         try:
             return InvestmentDecisionAgent(llm).explain(brief)

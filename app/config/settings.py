@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "qwen2.5:7b-instruct"
     llm_timeout_seconds: int = 600
+    decision_explanation_timeout_seconds: int = 90
     llm_temperature: float = 0.1
 
     max_cost_usd_per_run: float = 0.0

@@ -282,6 +282,10 @@ Pydantic-Response-Verträge und validieren Grenzfälle wie unbekannte Ticker und
 ungültige Limits. Die vollständige nicht-integrierte Test- und Qualitätsprüfung
 bleibt der Abschlusscheck für die Backend-Schichten.
 
+Explain-Aufrufe über Ollama verwenden separat `DECISION_EXPLANATION_TIMEOUT_SECONDS`
+(standardmäßig 90 Sekunden). Lange Research-Analysen behalten weiterhin das
+größere `LLM_TIMEOUT_SECONDS`-Limit.
+
 ### Manueller End-to-End-Test
 
 Für einen vollständigen lokalen Test öffne zwei PowerShell-Fenster. Das erste

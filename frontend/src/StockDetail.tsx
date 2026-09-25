@@ -51,7 +51,7 @@ export function StockDetail({ ticker, onBack }: StockDetailProps) {
     try {
       setExplanation(await api.decisionExplanation(ticker))
     } catch {
-      setExplanationError('Die lokale Erklärung konnte nicht geladen werden.')
+      setExplanationError('Die lokale Erklärung war nach 90 Sekunden nicht verfügbar oder wurde wegen fehlender Evidenz abgelehnt. Die deterministische Bewertung oben bleibt gültig.')
     } finally {
       setExplanationLoading(false)
     }

@@ -116,7 +116,7 @@ export const api = {
   portfolio: () => request<Portfolio>('/api/v1/portfolio'),
   alerts: (ticker: string) => request<{ alerts: Alert[] }>(`/api/v1/alerts?ticker=${encodeURIComponent(ticker)}&threshold=0.1`),
   stock: (ticker: string) => request<ResearchStock>(`/api/v1/stocks/${encodeURIComponent(ticker)}`),
-  decisionExplanation: (ticker: string) => request<DecisionExplanation>(`/api/v1/stocks/${encodeURIComponent(ticker)}/decision/explanation`, { method: 'POST' }),
+  decisionExplanation: (ticker: string) => request<DecisionExplanation>(`/api/v1/stocks/${encodeURIComponent(ticker)}/decision/explanation`, { method: 'POST', signal: AbortSignal.timeout(90000) }),
   startAnalysis: async (ticker: string) => {
     const response = await fetch(`${apiBase}/api/v1/analysis`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) })
     if (!response.ok) throw new Error(`${response.status} ${response.statusText}`)
