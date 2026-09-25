@@ -71,6 +71,24 @@ export type DecisionExplanation = DecisionBrief & {
   disclaimer: string
   model_metadata: Record<string, unknown>
 }
+export type DecisionHistory = {
+  ticker: string
+  current_run_id: string
+  current_generated_at: string
+  current_decision: DecisionBrief['decision']
+  current_confidence: DecisionBrief['confidence']
+  previous_run_id?: string | null
+  previous_generated_at?: string | null
+  previous_decision?: DecisionBrief['decision'] | null
+  previous_confidence?: DecisionBrief['confidence'] | null
+  decision_changed: boolean
+  key_changes: string[]
+  valuation_change: string
+  risk_change: string
+  thesis_change: string
+  scenario_change: string
+  important_change: string
+}
 export type AnalysisJob = { id: string; ticker: string; status: string; created_at: string; run_id?: string | null; error?: string | null }
 
 export type ResearchFact = { value?: string | number | null; unit?: string | null }
@@ -117,6 +135,7 @@ export const api = {
   alerts: (ticker: string) => request<{ alerts: Alert[] }>(`/api/v1/alerts?ticker=${encodeURIComponent(ticker)}&threshold=0.1`),
   stock: (ticker: string) => request<ResearchStock>(`/api/v1/stocks/${encodeURIComponent(ticker)}`),
   decisionExplanation: (ticker: string) => request<DecisionExplanation>(`/api/v1/stocks/${encodeURIComponent(ticker)}/decision/explanation`, { method: 'POST', signal: AbortSignal.timeout(90000) }),
+  decisionChanges: (ticker: string) => request<DecisionHistory>(`/api/v1/stocks/${encodeURIComponent(ticker)}/changes`),
   startAnalysis: async (ticker: string) => {
     const response = await fetch(`${apiBase}/api/v1/analysis`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) })
     if (!response.ok) throw new Error(`${response.status} ${response.statusText}`)
