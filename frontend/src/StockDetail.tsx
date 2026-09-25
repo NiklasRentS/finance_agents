@@ -19,19 +19,31 @@ function display(value: unknown, unit?: string | null) {
 export function StockDetail({ ticker, onBack }: StockDetailProps) {
   const [stock, setStock] = useState<ResearchStock | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [retryAttempt, setRetryAttempt] = useState(0)
   const [explanation, setExplanation] = useState<DecisionExplanation | null>(null)
   const [explanationError, setExplanationError] = useState<string | null>(null)
   const [explanationLoading, setExplanationLoading] = useState(false)
 
   useEffect(() => {
+    setRetryAttempt(0)
+  }, [ticker])
+
+  useEffect(() => {
     let active = true
+    setStock(null)
+    setError(null)
     void api.stock(ticker).then((result) => {
       if (active) setStock(result)
     }).catch(() => {
-      if (active) setError(`Keine gespeicherte Analyse für ${ticker} gefunden.`)
+      if (!active) return
+      if (retryAttempt < 20) {
+        window.setTimeout(() => setRetryAttempt((current) => current + 1), 1500)
+      } else {
+        setError(`Keine gespeicherte Analyse für ${ticker} gefunden.`)
+      }
     })
     return () => { active = false }
-  }, [ticker])
+  }, [ticker, retryAttempt])
 
   async function explainDecision() {
     setExplanationLoading(true)
@@ -46,7 +58,7 @@ export function StockDetail({ ticker, onBack }: StockDetailProps) {
   }
 
   if (error) return <section className="view-stack"><button className="text-button" onClick={onBack}><ArrowLeft size={15} /> Back to research</button><div className="detail-empty"><FileText size={24} /><strong>{error}</strong><span>Run an analysis from the CLI first, then refresh this view.</span></div></section>
-  if (!stock) return <section className="detail-loading"><span className="status-dot" /> Loading structured research for {ticker}...</section>
+  if (!stock) return <section className="detail-loading"><span className="status-dot" /> {retryAttempt > 0 ? `Warte auf den abgeschlossenen Analyse-Run für ${ticker}...` : `Loading structured research for ${ticker}...`}</section>
 
   const latest = stock.financials[stock.financials.length - 1]
   const values = latest?.values ?? {}

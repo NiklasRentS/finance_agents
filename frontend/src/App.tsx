@@ -88,8 +88,9 @@ function App() {
   const cash = portfolio.cash.reduce((sum, item) => sum + numberValue(item.amount), 0)
   const gain = totalValue - totalCost
   async function startAnalysis(ticker: string) {
-    setSelectedTicker(ticker.toUpperCase()); setView('stock'); setJobNotice(`Analysis queued for ${ticker.toUpperCase()}.`)
-    try { setJobId((await api.startAnalysis(ticker)).id) } catch { setJobNotice('Analysis could not be queued. Check that the backend is running.') }
+    const normalized = ticker.toUpperCase()
+    setSelectedTicker(normalized); setView('stock'); setJobNotice(`Analysis queued for ${normalized}.`)
+    try { setJobId((await api.startAnalysis(normalized)).id) } catch { setJobNotice('Analysis could not be queued. Check that the backend is running.') }
   }
 
   function openAnalysisDialog() { setAnalysisDialogOpen(true) }
